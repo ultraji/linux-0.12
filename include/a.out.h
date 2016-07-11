@@ -3,27 +3,36 @@
 
 #define __GNU_EXEC_MACROS__
 
-struct exec {
-  unsigned long a_magic;	/* Use macros N_MAGIC, etc for access */
-  unsigned a_text;		/* length of text, in bytes */
-  unsigned a_data;		/* length of data, in bytes */
-  unsigned a_bss;		/* length of uninitialized data area for file, in bytes */
-  unsigned a_syms;		/* length of symbol table data in file, in bytes */
-  unsigned a_entry;		/* start address */
-  unsigned a_trsize;		/* length of relocation info for text, in bytes */
-  unsigned a_drsize;		/* length of relocation info for data, in bytes */
+struct exec { /* 文件头结构 */
+  unsigned long a_magic;	/* Use macros N_MAGIC, etc for access */  /* 执行文件魔数。使用N_MAGIC等宏访问 */
+  unsigned a_text;		/* length of text, in bytes */  /* 代码长度，字节数 */
+  unsigned a_data;		/* length of data, in bytes */  /* 数据长度，字节数 */
+  unsigned a_bss;		/* length of uninitialized data area for file, in bytes */ /* 文件中的未初始化数据区的长度，字节数 */
+  unsigned a_syms;		/* length of symbol table data in file, in bytes */ /* 文件中的符号表长度，字节数 */
+  unsigned a_entry;		/* start address */ /* 执行开始地址 */
+  unsigned a_trsize;		/* length of relocation info for text, in bytes */ /* 代码重定位信息长度，字节数 */
+  unsigned a_drsize;		/* length of relocation info for data, in bytes */ /* 数据重定位信息长度，字节数 */
 };
+
+/* 魔数：很多类型的文件，其起始的几个字节的内容是固定的（或是有意填充，或是本就如此）
+  。因此这几个字节的内容也被称为魔数 (magic number)，因为根据这几个字节的内容就可以
+  确定文件类型。
+
+*/
 
 #ifndef N_MAGIC
 #define N_MAGIC(exec) ((exec).a_magic)
 #endif
-
+/* OMAGIC 和 ZMAGIC 的主要区别在于它们对各个部分的存储分配方式上。虽然该结构的总长度只有32B，但是对于一个ZMAGIC类型的执行文件来说，
+  其文件开始部分却需要专门留出1KB的空间给头结构使用。除被头结构占用的32B以外，其余部分均为0。从1024字节之后才开始放置程序的
+  正文段和数据段等信息。而对于一个OMAGIC类型的.o模块文件来说，文件开始部分的32字节头结构后面紧接着就是代码区和数据区。 
+*/
 #ifndef OMAGIC
-/* Code indicating object file or impure executable.  */
+/* Code indicating object file or impure executable.  */ /* OMAGIC(Old Magic)指明文件是目标文件或者不纯的可执行文件 */
 #define OMAGIC 0407
-/* Code indicating pure executable.  */
+/* Code indicating pure executable.  */ /* 文件为纯粹的可执行文件  */ 
 #define NMAGIC 0410
-/* Code indicating demand-paged executable.  */
+/* Code indicating demand-paged executable.  */ /* 文件为需求分页处理（demand-paging，即需求加载，load on demand）的可执行文件  */
 #define ZMAGIC 0413
 #endif /* not OMAGIC */
 
@@ -190,30 +199,44 @@ struct nlist {
    all of which apply to the text section.
    Likewise, the data-relocation section applies to the data section.  */
 
-struct relocation_info
+/* 重定位项的功能有两个。一是当代码段被重定位到一个不同的基地址处时，
+   重定位项则用于指出需要修改的地方。二是在模块文件中存在对未定义符
+   号引用时，当此未定义符号最终被定义时链接程序就可以使用相应重定位
+   项对符号的值进行修正。由上面重定位记录项的结构可以看出，每个记录
+   项含有模块文件代码区（代码段）和数据区（数据段）中需要重定位处长
+   度为4B的地址以及规定如何具体进行重定位操作的信息。  */
+
+struct relocation_info  /* 重定向信息部分 */
 {
   /* Address (within segment) to be relocated.  */
-  int r_address;
+  int r_address;  // 段内需要重定位的地址。
   /* The meaning of r_symbolnum depends on r_extern.  */
-  unsigned int r_symbolnum:24;
+  unsigned int r_symbolnum:24;  // 含义与r_extern有关。指定符号表中一个符号或者一个段。
   /* Nonzero means value is a pc-relative offset
      and it should be relocated for changes in its own address
      as well as for changes in the symbol or section specified.  */
-  unsigned int r_pcrel:1;
+  unsigned int r_pcrel:1; // 1位。PC相关标志。即它作为一个相对地址被用于指令当中
   /* Length (as exponent of 2) of the field to be relocated.
      Thus, a value of 2 indicates 1<<2 bytes.  */
-  unsigned int r_length:2;
+  unsigned int r_length:2;  // 2位。指定要被重定位字段长度（2的次方），0到3分别表示被重定位项的宽度是1B、2B、4B或8B
   /* 1 => relocate with value of symbol.
           r_symbolnum is the index of the symbol
 	  in file's the symbol table.
      0 => relocate with the address of a segment.
           r_symbolnum is N_TEXT, N_DATA, N_BSS or N_ABS
 	  (the N_EXT bit may be set also, but signifies nothing).  */
-  unsigned int r_extern:1;
+  unsigned int r_extern:1;  // 外部标志位。1 - 以符号的值重定位。0 - 以段的地址重定位。
   /* Four bits that aren't used, but when writing an object file
      it is desirable to clear them.  */
-  unsigned int r_pad:4;
+  unsigned int r_pad:4; // 没有使用的4个位，但最好将它们复位掉。
 };
+
+/* 外部标志位r_extern控制着r_symbolnum的含义，指明重定位项参考的是段
+   还是一个符号。如果该标志值是0，那么该重定位项是一个普通的重定位项，
+   此时r_symbolnum字段指定在哪个段中寻址定位。如果该标志是1，那么该重
+   定位项是对一个外部符号的引用，此时r_symbolnum指定目标文件中符号表
+   中的一个符号，需要使用符号的值进行重定位。 */
+
 #endif /* no N_RELOCATION_INFO_DECLARED.  */
 
 

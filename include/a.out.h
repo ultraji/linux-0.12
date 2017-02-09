@@ -3,6 +3,7 @@
 
 #define __GNU_EXEC_MACROS__
 
+<<<<<<< HEAD
 struct exec { /* 文件头结构 */
   unsigned long a_magic;	/* Use macros N_MAGIC, etc for access */  /* 执行文件魔数。使用N_MAGIC等宏访问 */
   unsigned a_text;		/* length of text, in bytes */  /* 代码长度，字节数 */
@@ -33,6 +34,29 @@ struct exec { /* 文件头结构 */
 /* Code indicating pure executable.  */ /* 文件为纯粹的可执行文件  */ 
 #define NMAGIC 0410
 /* Code indicating demand-paged executable.  */ /* 文件为需求分页处理（demand-paging，即需求加载，load on demand）的可执行文件  */
+=======
+struct exec {
+  unsigned long a_magic;	/* Use macros N_MAGIC, etc for access */
+  unsigned a_text;		/* length of text, in bytes */
+  unsigned a_data;		/* length of data, in bytes */
+  unsigned a_bss;		/* length of uninitialized data area for file, in bytes */
+  unsigned a_syms;		/* length of symbol table data in file, in bytes */
+  unsigned a_entry;		/* start address */
+  unsigned a_trsize;		/* length of relocation info for text, in bytes */
+  unsigned a_drsize;		/* length of relocation info for data, in bytes */
+};
+
+#ifndef N_MAGIC
+#define N_MAGIC(exec) ((exec).a_magic)
+#endif
+
+#ifndef OMAGIC
+/* Code indicating object file or impure executable.  */
+#define OMAGIC 0407
+/* Code indicating pure executable.  */
+#define NMAGIC 0410
+/* Code indicating demand-paged executable.  */
+>>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 #define ZMAGIC 0413
 #endif /* not OMAGIC */
 
@@ -199,6 +223,7 @@ struct nlist {
    all of which apply to the text section.
    Likewise, the data-relocation section applies to the data section.  */
 
+<<<<<<< HEAD
 /* 重定位项的功能有两个。一是当代码段被重定位到一个不同的基地址处时，
    重定位项则用于指出需要修改的地方。二是在模块文件中存在对未定义符
    号引用时，当此未定义符号最终被定义时链接程序就可以使用相应重定位
@@ -219,12 +244,28 @@ struct relocation_info  /* 重定向信息部分 */
   /* Length (as exponent of 2) of the field to be relocated.
      Thus, a value of 2 indicates 1<<2 bytes.  */
   unsigned int r_length:2;  // 2位。指定要被重定位字段长度（2的次方），0到3分别表示被重定位项的宽度是1B、2B、4B或8B
+=======
+struct relocation_info
+{
+  /* Address (within segment) to be relocated.  */
+  int r_address;
+  /* The meaning of r_symbolnum depends on r_extern.  */
+  unsigned int r_symbolnum:24;
+  /* Nonzero means value is a pc-relative offset
+     and it should be relocated for changes in its own address
+     as well as for changes in the symbol or section specified.  */
+  unsigned int r_pcrel:1;
+  /* Length (as exponent of 2) of the field to be relocated.
+     Thus, a value of 2 indicates 1<<2 bytes.  */
+  unsigned int r_length:2;
+>>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
   /* 1 => relocate with value of symbol.
           r_symbolnum is the index of the symbol
 	  in file's the symbol table.
      0 => relocate with the address of a segment.
           r_symbolnum is N_TEXT, N_DATA, N_BSS or N_ABS
 	  (the N_EXT bit may be set also, but signifies nothing).  */
+<<<<<<< HEAD
   unsigned int r_extern:1;  // 外部标志位。1 - 以符号的值重定位。0 - 以段的地址重定位。
   /* Four bits that aren't used, but when writing an object file
      it is desirable to clear them.  */
@@ -237,6 +278,13 @@ struct relocation_info  /* 重定向信息部分 */
    定位项是对一个外部符号的引用，此时r_symbolnum指定目标文件中符号表
    中的一个符号，需要使用符号的值进行重定位。 */
 
+=======
+  unsigned int r_extern:1;
+  /* Four bits that aren't used, but when writing an object file
+     it is desirable to clear them.  */
+  unsigned int r_pad:4;
+};
+>>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 #endif /* no N_RELOCATION_INFO_DECLARED.  */
 
 

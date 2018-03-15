@@ -1,11 +1,5 @@
 !
 ! SYS_SIZE is the number of clicks (16 bytes) to be loaded.
-<<<<<<< HEAD
-! 0x3000 is 0x30000 bytes = 196kB, more than enough for current
-! versions of linux
-!
-#include <linux/config.h>
-=======
 ! SYS_SIZE 是要加载的系统模块长度（单位是节，每节有16字节）。
 ! 0x3000 is 0x30000 bytes = 196kB, more than enough for current
 ! 即 0x30000 bytes = 192 KB（估算，以1000为单位，则是196KB），对于当前的
@@ -22,7 +16,6 @@
 ! DEF_SETUPSEG = 0x9020 setup程序代码的段位置
 ! DEF_SYSSEG = 0x1000 从磁盘加载系统模块到内存的段位置
 !
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 SYSSIZE = DEF_SYSSIZE
 !
 !	bootsect.s		(C) 1991 Linus Torvalds
@@ -36,19 +29,13 @@ SYSSIZE = DEF_SYSSIZE
 !
 ! NOTE! currently system is at most 8*65536 bytes long. This should be no
 ! problem, even in the future. I want to keep it simple. This 512 kB
-<<<<<<< HEAD
 ! kernel size should be enough, especially as this doesn't contain the
-=======
-! kernel size should be enough, especially as this doesn't contain the 			'
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 ! buffer cache as in minix
 !
 ! The loader has been made as simple as possible, and continuos
 ! read errors will result in a unbreakable loop. Reboot by hand. It
 ! loads pretty fast by getting whole sectors at a time whenever possible.
 
-<<<<<<< HEAD
-=======
 ! 以下是前面这些文字的翻译：
 ! 	bootsect.s 	(C) 1991 Linus Torvalds 版权所有
 !	Drew Eckhardt 修改
@@ -66,7 +53,6 @@ SYSSIZE = DEF_SYSSIZE
 ! 加载程序已经做得够简单了，所以持续的读操作出错将导致死循环。只能手工重启。
 ! 只要可能，通过一次读取所有的扇区，加载过程可以做的很快的。
 
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 .globl begtext, begdata, begbss, endtext, enddata, endbss
 .text
 begtext:
@@ -76,21 +62,6 @@ begdata:
 begbss:
 .text
 
-<<<<<<< HEAD
-SETUPLEN = 4				! nr of setup-sectors
-BOOTSEG  = 0x07c0			! original address of boot-sector
-INITSEG  = DEF_INITSEG			! we move boot here - out of the way
-SETUPSEG = DEF_SETUPSEG			! setup starts here
-SYSSEG   = DEF_SYSSEG			! system loaded at 0x10000 (65536).
-ENDSEG   = SYSSEG + SYSSIZE		! where to stop loading
-
-! ROOT_DEV & SWAP_DEV are now written by "build".
-ROOT_DEV = 0
-SWAP_DEV = 0
-
-entry start
-start:
-=======
 SETUPLEN = 4				! nr of setup-sectors 
 							! setup 占用的磁盘扇区数
 BOOTSEG  = 0x07c0			! original address of boot-sector
@@ -124,26 +95,11 @@ SWAP_DEV = 0	! 交换设备使用与引导时同样的设备。
 entry start 	! 告知链接程序，程序从 start 标号处开始执行。
 start:
 	! 将自身(bootsect)从当前段位置(即 0x7c00 )移动到 0x90000 处，共256个字节。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	mov	ax,#BOOTSEG
 	mov	ds,ax
 	mov	ax,#INITSEG
 	mov	es,ax
 	mov	cx,#256
-<<<<<<< HEAD
-	sub	si,si
-	sub	di,di
-	rep
-	movw
-	jmpi	go,INITSEG
-
-go:	mov	ax,cs		
-	mov	dx,#0xfef4	! arbitrary value >>512 - disk parm size
-
-	mov	ds,ax
-	mov	es,ax
-	push	ax
-=======
 	sub	si,si 		! 源地址 ds:si = 0x07c0:0x0000;
 	sub	di,di 		! 目标地址 es:di = 0x9000:0x0000;
 	rep
@@ -168,16 +124,11 @@ go:	mov	ax,cs
 	mov	ds,ax
 	mov	es,ax
 	push	ax		! 临时保存段值( 0x9000 )，供 后面 使用。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 
 	mov	ss,ax		! put stack at 0x9ff00 - 12.
 	mov	sp,dx
 /*
-<<<<<<< HEAD
- *	Many BIOS's default disk parameter tables will not 
-=======
  *	Many BIOS's default disk parameter tables will not 				'
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
  *	recognize multi-sector reads beyond the maximum sector number
  *	specified in the default diskette parameter tables - this may
  *	mean 7 sectors in some cases.
@@ -187,37 +138,11 @@ go:	mov	ax,cs
  *	(for the first disk) in RAM.  We will set the maximum sector
  *	count to 18 - the most we will encounter on an HD 1.44.  
  *
-<<<<<<< HEAD
  *	High doesn't hurt.  Low does.
-=======
- *	High doesn't hurt.  Low does.		'
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
  *
  *	Segments are as follows: ds=es=ss=cs - INITSEG,
  *		fs = 0, gs = parameter table segment
  */
-<<<<<<< HEAD
-
-
-	push	#0
-	pop	fs
-	mov	bx,#0x78		! fs:bx is parameter table address
-	seg fs
-	lgs	si,(bx)			! gs:si is source
-
-	mov	di,dx			! es:di is destination
-	mov	cx,#6			! copy 12 bytes
-	cld
-
-	rep
-	seg gs
-	movw
-
-	mov	di,dx
-	movb	4(di),*18		! patch sector count
-
-	seg fs
-=======
 /*
  * 对于多扇区读操作所读的扇区数超过默认磁盘参数表中指定的最大扇区数时，很多 BIOS
  * 将不能进行正确识别。在某些情况下是7个扇区。
@@ -255,33 +180,20 @@ go:	mov	ax,cs
 	movb	4(di),*18		! patch sector count
 
 	seg fs 				! 让中断向量 0x1e 的值指向新表。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	mov	(bx),di
 	seg fs
 	mov	2(bx),es
 
-<<<<<<< HEAD
-	pop	ax
-	mov	fs,ax
-	mov	gs,ax
-	
-	xor	ah,ah			! reset FDC 
-	xor	dl,dl
-=======
 	pop	ax 				!ax = 0x9000
 	mov	fs,ax
 	mov	gs,ax
 	
 	xor	ah,ah			! reset FDC ! 复位软盘控制器，让其采用新参数。
 	xor	dl,dl 			! dl = 0; 第1个软驱
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	int 	0x13	
 
 ! load the setup-sectors directly after the bootblock.
 ! Note that 'es' is already set up.
-<<<<<<< HEAD
-
-=======
 ! 在 bootsect 程序块后紧跟着加载 setup 模块的代码数据。
 ! 在移动代码时，es的值已被设置好。 
 ! 利用BIOS 中断INT 0x13 将 setup 模块从磁盘第 2 个扇区
@@ -292,27 +204,12 @@ go:	mov	ax,cs
 ! ch = 磁道(柱面)号的低8 位； cl = 开始扇区(0-5 位)，磁道号高2 位(6-7)；
 ! dh = 磁头号； dl = 驱动器号（如果是硬盘则要置位7）；
 ! es:bx 指向数据缓冲区； 如果出错则 CF 标志置位，并且ah中是出错码。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 load_setup:
 	xor	dx, dx			! drive 0, head 0
 	mov	cx,#0x0002		! sector 2, track 0
 	mov	bx,#0x0200		! address = 512, in INITSEG
 	mov	ax,#0x0200+SETUPLEN	! service 2, nr of sectors
 	int	0x13			! read it
-<<<<<<< HEAD
-	jnc	ok_load_setup		! ok - continue
-
-	push	ax			! dump error code
-	call	print_nl
-	mov	bp, sp
-	call	print_hex
-	pop	ax	
-	
-	xor	dl, dl			! reset FDC
-	xor	ah, ah
-	int	0x13
-	j	load_setup
-=======
 	jnc	ok_load_setup 	! ok - continue
 
 	push	ax			! dump error code	!显示出错信息。出错码入栈。
@@ -325,13 +222,10 @@ load_setup:
 	xor	ah, ah
 	int	0x13
 	j	load_setup 		! j 即 jmp
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 
 ok_load_setup:
 
 ! Get disk drive parameters, specifically nr of sectors/track
-<<<<<<< HEAD
-=======
 ! 这段代码取磁盘驱动器的参数，特别是每道的扇区数量，并保存在位置 sectors 处。
 ! 取磁盘驱动器参数 INT 0x13 调用格式和返回信息如下：
 ! ah = 0x08 dl = 驱动器号（如果是硬盘则要置位7 为1）。
@@ -341,39 +235,11 @@ ok_load_setup:
 ! ch = 最大磁道号的低 8 位，cl = 每磁道最大扇区数(位 0-5)，最大磁道号高 2 位(位 6-7)
 ! dh = 最大磁头数， dl = 驱动器数量，
 ! es:di -> 软驱磁盘参数表。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 
 	xor	dl,dl
 	mov	ah,#0x08		! AH=8 is get drive parameters
 	int	0x13
 	xor	ch,ch
-<<<<<<< HEAD
-	seg cs
-	mov	sectors,cx
-	mov	ax,#INITSEG
-	mov	es,ax
-
-! Print some inane message
-
-	mov	ah,#0x03		! read cursor pos
-	xor	bh,bh
-	int	0x10
-	
-	mov	cx,#9
-	mov	bx,#0x0007		! page 0, attribute 7 (normal)
-	mov	bp,#msg1
-	mov	ax,#0x1301		! write string, move cursor
-	int	0x10
-
-! ok, we've written the message, now
-! we want to load the system (at 0x10000)
-
-	mov	ax,#SYSSEG
-	mov	es,ax		! segment of 0x010000
-	call	read_it
-	call	kill_motor
-	call	print_nl
-=======
 	seg cs 				! 因为原本就处于代码段，可以不用这句
 	mov	sectors,cx		! 保存每磁道扇区数。
 	mov	ax,#INITSEG
@@ -404,22 +270,11 @@ ok_load_setup:
 	call	read_it ! 读磁盘上 system 模块，es 为输入参数。
 	call	kill_motor ! 关闭驱动器马达，这样就可以知道驱动器的状态了。
 	call	print_nl	! 光标回车换行，我感觉可以放在加载 system 模块前的 int 0x10 指令后。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 
 ! After that we check which root-device to use. If the device is
 ! defined (!= 0), nothing is done and the given device is used.
 ! Otherwise, either /dev/PS0 (2,28) or /dev/at0 (2,8), depending
 ! on the number of sectors that the BIOS reports currently.
-<<<<<<< HEAD
-
-	seg cs
-	mov	ax,root_dev
-	or	ax,ax
-	jne	root_defined
-	seg cs
-	mov	bx,sectors
-	mov	ax,#0x0208		! /dev/ps0 - 1.2Mb
-=======
 ! 此后，我们检查要使用哪个根文件系统设备（简称根设备）。如果已经指定了设备(!= 0)就直
 ! 接使用给定的设备。否则就需要根据 BIOS 报告的每磁道扇区数来确定到底使用/dev/PS0 (2,28) 
 ! 还是 /dev/at0 (2,8)。
@@ -436,101 +291,32 @@ ok_load_setup:
 	seg cs 				! 取出 sectors 的值(每磁道扇区数);sectors = 15 则说明是 1.2MB 的驱动器;
 	mov	bx,sectors 		! sectors = 18 则说明是 1.44MB 的软驱。因为是可引导的驱动器，所以是A驱。
 	mov	ax,#0x0208		! /dev/PS0 - 1.2Mb
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	cmp	bx,#15
 	je	root_defined
 	mov	ax,#0x021c		! /dev/PS0 - 1.44Mb
 	cmp	bx,#18
 	je	root_defined
-<<<<<<< HEAD
-undef_root:
-	jmp undef_root
-root_defined:
-=======
 undef_root:				!都不等于的情况下则进入死循环
 	jmp undef_root
 root_defined:			!将检查过的设备号保存到 root_dev 中。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	seg cs
 	mov	root_dev,ax
 
 ! after that (everyting loaded), we jump to
 ! the setup-routine loaded directly after
 ! the bootblock:
-<<<<<<< HEAD
-
-	jmpi	0,SETUPSEG
-
-=======
 ! 到此，所有程序都加载完毕，我们就跳转到被加载在 bootsect 后面的 setup 程序去。
 
 	jmpi	0,SETUPSEG
 
 !!!!!!!!!!!!!!!!!!!!! bootsect.S 程序到此就结束了。
 
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 ! This routine loads the system at address 0x10000, making sure
 ! no 64kB boundaries are crossed. We try to load it as fast as
 ! possible, loading whole tracks whenever we can.
 !
 ! in:	es - starting address segment (normally 0x1000)
 !
-<<<<<<< HEAD
-sread:	.word 1+SETUPLEN	! sectors read of current track
-head:	.word 0			! current head
-track:	.word 0			! current track
-
-read_it:
-	mov ax,es
-	test ax,#0x0fff
-die:	jne die			! es must be at 64kB boundary
-	xor bx,bx		! bx is starting address within segment
-rp_read:
-	mov ax,es
-	cmp ax,#ENDSEG		! have we loaded all yet?
-	jb ok1_read
-	ret
-ok1_read:
-	seg cs
-	mov ax,sectors
-	sub ax,sread
-	mov cx,ax
-	shl cx,#9
-	add cx,bx
-	jnc ok2_read
-	je ok2_read
-	xor ax,ax
-	sub ax,bx
-	shr ax,#9
-ok2_read:
-	call read_track
-	mov cx,ax
-	add ax,sread
-	seg cs
-	cmp ax,sectors
-	jne ok3_read
-	mov ax,#1
-	sub ax,head
-	jne ok4_read
-	inc track
-ok4_read:
-	mov head,ax
-	xor ax,ax
-ok3_read:
-	mov sread,ax
-	shl cx,#9
-	add bx,cx
-	jnc rp_read
-	mov ax,es
-	add ah,#0x10
-	mov es,ax
-	xor bx,bx
-	jmp rp_read
-
-read_track:
-	pusha
-	pusha	
-=======
 ! 该子程序将系统模块加载到内存地址 0x10000 处，并确定没有跨越 64KB 的内存边界。我们试图尽快
 ! 地进行加载，只要可能，就每次加载整条磁道的数据。
 ! 输入：es – 开始内存地址段值（通常是 0x1000）
@@ -604,25 +390,11 @@ read_track:
 	pusha			! 压人所有寄存器(push all)
 	! 首先调用 BIOS 中断，功能 ah = 0x0e (以电传方式传字符)，光标前移一位置。
 	pusha			
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	mov	ax, #0xe2e 	! loading... message 2e = .
 	mov	bx, #7
  	int	0x10
 	popa		
 
-<<<<<<< HEAD
-	mov dx,track
-	mov cx,sread
-	inc cx
-	mov ch,dl
-	mov dx,head
-	mov dh,dl
-	and dx,#0x0100
-	mov ah,#2
-	
-	push	dx				! save for error dump
-	push	cx
-=======
 ! 开始进行磁道扇区读操作。
 	mov dx,track 	! 当前磁道号
 	mov cx,sread 	! 当前磁道上已读扇区
@@ -635,24 +407,16 @@ read_track:
 	
 	push	dx				! save for error dump
 	push	cx				! 保留出错情况
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	push	bx
 	push	ax
 
 	int 0x13
 	jc bad_rt
-<<<<<<< HEAD
-	add	sp, #8   	
-	popa
-	ret
-
-=======
 	add	sp, #8				! 若没有出错，丢弃出错情况保存的信息。   	
 	popa
 	ret
 
 ! 读磁盘操作出错。则先显示出错信息，然后执行驱动复位操作(磁盘中断功能号0)，再跳转到read_track处重试。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 bad_rt:	push	ax				! save error code
 	call	print_all			! ah = error, al = read
 	
@@ -662,11 +426,7 @@ bad_rt:	push	ax				! save error code
 	int 0x13
 	
 
-<<<<<<< HEAD
-	add	sp, #10
-=======
 	add	sp, #10					! 丢弃为出错情况保存的信息 ax + ax,bx,cx,dx
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	popa	
 	jmp read_track
 
@@ -682,11 +442,7 @@ bad_rt:	push	ax				! save error code
  *	ret <- sp
  *
 */
-<<<<<<< HEAD
- 
-=======
  ! print_all 用于调试目的，前提是从一个子程序中调用。并栈帧结构如上所示
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 print_all:
 	mov	cx, #5		! error code + 4 registers
 	mov	bp, sp	
@@ -713,10 +469,7 @@ no_reg:
 	loop	print_loop
 	ret
 
-<<<<<<< HEAD
-=======
 ! 调用 BIOS 中断 0x10，以电传方式显示回车换行
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 print_nl:
 	mov	ax, #0xe0d	! CR
 	int	0x10
@@ -733,20 +486,6 @@ print_hex:
 	mov	cx, #4		! 4 hex digits
 	mov	dx, (bp)	! load word into dx
 print_digit:
-<<<<<<< HEAD
-	rol	dx, #4		! rotate so that lowest 4 bits are used
-	mov	ah, #0xe	
-	mov	al, dl		! mask off so we have only next nibble
-	and	al, #0xf
-	add	al, #0x30	! convert to 0 based digit, '0'
-	cmp	al, #0x39	! check for overflow
-	jbe	good_digit
-	add	al, #0x41 - 0x30 - 0xa 	! 'A' - '0' - 0xa
-
-good_digit:
-	int	0x10
-	loop	print_digit
-=======
 	rol	dx, #4		! rotate so that lowest 4 bits are used 左旋4位
 	mov	ah, #0xe	
 	mov	al, dl		! mask off so we have only next nibble
@@ -759,22 +498,12 @@ good_digit:
 good_digit:
 	int	0x10
 	loop	print_digit			! cx--。如cx>0 则显示下一个值
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	ret
 
 
 /*
  * This procedure turns off the floppy drive motor, so
  * that we enter the kernel in a known state, and
-<<<<<<< HEAD
- * don't have to worry about it later.
- */
-kill_motor:
-	push dx
-	mov dx,#0x3f2
-	xor al, al
-	outb
-=======
  * don't have to worry about it later.					'
  */
  ! 这个子程序用于关闭软驱的马达，这样我们进入内核后它处于已知状态，以后也就无须担心它了。
@@ -783,7 +512,6 @@ kill_motor:
 	mov dx,#0x3f2		! 软驱控制卡的数字输出寄存器端口，只读。
 	xor al, al
 	outb				! 将al中的值输出到dx指定的端口去。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 	pop dx
 	ret
 
@@ -795,19 +523,13 @@ msg1:
 	.ascii "Loading"
 
 .org 506
-<<<<<<< HEAD
-=======
 ! 表示下面语句从地址 506 (0x1FC)开始，所以 swap_dev 在启动扇区的第 506 开
 ! 始的 2 个字节中，root_dev 在启动扇区的第 508 开始的 2 个字节中。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 swap_dev:
 	.word SWAP_DEV
 root_dev:
 	.word ROOT_DEV
-<<<<<<< HEAD
-=======
 ! 下面是启动盘具有有效引导扇区的标志。
->>>>>>> 0f46eaaa6f9bc5248db3f909e59d9b30af2578a4
 boot_flag:
 	.word 0xAA55
 

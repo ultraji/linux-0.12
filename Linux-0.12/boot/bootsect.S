@@ -1,21 +1,14 @@
-!
 ! SYS_SIZE is the number of clicks (16 bytes) to be loaded.
-! SYS_SIZE 是要加载的系统模块长度（单位是节，每节有16字节）。
 ! 0x3000 is 0x30000 bytes = 196kB, more than enough for current
+! versions of linux
+! SYS_SIZE 是要加载的系统模块长度（单位是节，每节有16字节）。
 ! 即 0x30000 bytes = 192 KB（估算，以1000为单位，则是196KB），对于当前的
 ! 版本空间已足够了。
 ! 例如，当该值为 0x8000 时，表示内核最大为512KB。
-! versions of linux
-!
+
 #include <linux/config.h>
-!
 ! 该头文件里定义了内核用到的一些常数符号和 Linus 自己使用的默认硬盘默认参数块。
-! 例如:
-! DEF_SYSSIZE = 0X3000 系统模块长度
-! DEF_INITSEG = 0x9000 该程序将要移动到的目的段位置
-! DEF_SETUPSEG = 0x9020 setup程序代码的段位置
-! DEF_SYSSEG = 0x1000 从磁盘加载系统模块到内存的段位置
-!
+
 SYSSIZE = DEF_SYSSIZE
 !
 !	bootsect.s		(C) 1991 Linus Torvalds
@@ -62,10 +55,10 @@ begdata:
 begbss:
 .text
 
-SETUPLEN = 4				! nr of setup-sectors 
-							! setup 占用的磁盘扇区数
-BOOTSEG  = 0x07c0			! original address of boot-sector
-							! bootsect 代码所在的原地址（被BIOS子程序加载至此处）
+SETUPLEN = 4					! nr of setup-sectors 
+								! setup 占用的磁盘扇区数
+BOOTSEG  = 0x07c0				! original address of boot-sector
+								! bootsect 代码所在的原地址（被BIOS子程序加载至此处）
 INITSEG  = DEF_INITSEG			! we move boot here - out of the way
 								! bootsect将要移动到的目的段位置，为了避开系统模块占用处
 SETUPSEG = DEF_SETUPSEG			! setup starts here

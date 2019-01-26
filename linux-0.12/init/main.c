@@ -211,7 +211,8 @@ void main(void)		/* This really IS void, no error here. */
  // pause()系统调用会把任务 0 转换成可中断等待状态，再执行调度函数。但是调度函数
  // 发现系统中没有其他程序可以运行就会切换到任务 0，而不依赖任务 0 的状态。
 	for(;;)
-		__asm__("int $0x80"::"a" (__NR_pause):"ax");//执行系统调用pause()
+		//__asm__("int $0x80"::"a" (__NR_pause):"ax");//执行系统调用pause()
+		pause();
 }
 
 //产生格式化信息并输出到标准输出设备stdout(1)，这里是指屏幕上显示。

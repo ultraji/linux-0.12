@@ -228,7 +228,7 @@ gdt_descr:
 	.word 256*8-1		# so does gdt (not that that's any
 	.long _gdt		# magic number, but it works for me :^)
 
-	.align 3
+	.align 8
 _idt:	.fill 256,8,0		# idt is uninitialized
 
 _gdt:	.quad 0x0000000000000000	/* NULL descriptor */

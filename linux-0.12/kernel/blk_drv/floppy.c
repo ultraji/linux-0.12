@@ -156,7 +156,7 @@ repeat:
 #define copy_buffer(from,to) \
 __asm__("cld ; rep ; movsl" \
 	::"c" (BLOCK_SIZE/4),"S" ((long)(from)),"D" ((long)(to)) \
-	:"cx","di","si")
+	)
 
 static void setup_DMA(void)
 {

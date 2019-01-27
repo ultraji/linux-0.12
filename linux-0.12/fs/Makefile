@@ -1,10 +1,10 @@
-AR	=gar
-AS	=gas
-CC	=gcc
-LD	=gld
-CFLAGS	=-Wall -O -fstrength-reduce -fcombine-regs -fomit-frame-pointer \
-	-fno-defer-pop -mstring-insns -nostdinc -I../include
-CPP	=gcc -E -nostdinc -I../include
+AR	=ar
+AS	=as --32
+CC	=gcc-3.4
+LD	=ld -m elf_i386  # 64位系统下链接，需要开启 -m elf_i386
+CFLAGS	=-m32 -Wall -O -fstrength-reduce  -fomit-frame-pointer \
+ -fno-defer-pop -nostdinc -I../include # -fcombine-regs -mstring-insns
+CPP	=gcc-3.4 -E -nostdinc -I../include
 
 .c.s:
 	$(CC) $(CFLAGS) \

@@ -101,7 +101,7 @@ __asm__("addl %0,%0 ; adcl %1,%1\n\t" \
 "addl %0,%0 ; adcl %1,%1\n\t" \
 "addl %%ecx,%0 ; adcl %%ebx,%1" \
 :"=a" (low),"=d" (high) \
-:"0" (low),"1" (high):"cx","bx")
+:"0" (low),"1" (high))
 
 #define ADD64(val,low,high) \
 __asm__("addl %4,%0 ; adcl $0,%1":"=r" (low),"=r" (high) \

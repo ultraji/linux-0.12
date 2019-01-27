@@ -1,10 +1,10 @@
-CC	=gcc
-CFLAGS	=-O -Wall -fstrength-reduce -fcombine-regs -fomit-frame-pointer \
-	-finline-functions -nostdinc -I../include
-AS	=gas
-AR	=gar
-LD	=gld
-CPP	=gcc -E -nostdinc -I../include
+CC	=gcc-3.4
+CFLAGS	=-m32 -O -Wall -fstrength-reduce -fomit-frame-pointer \
+	-finline-functions -nostdinc -I../include # -fcombine-regs
+AS	=as --32
+AR	=ar
+LD	=ld -m elf_i386 # 64位系统下链接，需要开启 -m elf_i386
+CPP	=gcc-3.4 -E -nostdinc -I../include
 
 .c.o:
 	$(CC) $(CFLAGS) \

@@ -221,12 +221,12 @@ __asm__("str %%ax\n\t" \
  */
 #define switch_to(n) {\
 struct {long a,b;} __tmp; \
-__asm__("cmpl %%ecx,_current\n\t" \
+__asm__("cmpl %%ecx,current\n\t" \
 	"je 1f\n\t" \
 	"movw %%dx,%1\n\t" \
-	"xchgl %%ecx,_current\n\t" \
+	"xchgl %%ecx,current\n\t" \
 	"ljmp %0\n\t" \
-	"cmpl %%ecx,_last_task_used_math\n\t" \
+	"cmpl %%ecx,last_task_used_math\n\t" \
 	"jne 1f\n\t" \
 	"clts\n" \
 	"1:" \
@@ -245,7 +245,7 @@ __asm__("movw %%dx,%0\n\t" \
 	  "m" (*((addr)+4)), \
 	  "m" (*((addr)+7)), \
 	  "d" (base) \
-	:"dx")
+	  )
 
 #define _set_limit(addr,limit) \
 __asm__("movw %%dx,%0\n\t" \
@@ -257,7 +257,7 @@ __asm__("movw %%dx,%0\n\t" \
 	::"m" (*(addr)), \
 	  "m" (*((addr)+6)), \
 	  "d" (limit) \
-	:"dx")
+	)
 
 #define set_base(ldt,base) _set_base( ((char *)&(ldt)) , base )
 #define set_limit(ldt,limit) _set_limit( ((char *)&(ldt)) , (limit-1)>>12 )

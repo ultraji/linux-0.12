@@ -6,20 +6,20 @@
 # unless it's something special (ie not a .c file).
 #
 
-AR	=gar
-AS	=gas
-LD	=gld
+AR	=ar
+AS	=as --32
+LD	=ld -m elf_i386  # 64位系统下链接，需要开启 -m elf_i386
 LDFLAGS	=-s -x
-CC	=gcc
-CFLAGS	=-Wall -O -fstrength-reduce -fomit-frame-pointer -fcombine-regs \
-	-finline-functions -mstring-insns -nostdinc -I../include
-CPP	=gcc -E -nostdinc -I../include
+CC	=gcc-3.4
+CFLAGS	=-m32 -Wall -O -fstrength-reduce -fomit-frame-pointer\
+	-finline-functions -nostdinc -I../include # -mstring-insns -fcombine-regs
+CPP	=gcc-3.4 -E -nostdinc -I../include
 
 .c.s:
 	$(CC) $(CFLAGS) \
 	-S -o $*.s $<
 .s.o:
-	$(AS) -c -o $*.o $<
+	$(AS) -o $*.o $<
 .c.o:
 	$(CC) $(CFLAGS) \
 	-c -o $*.o $<
@@ -29,7 +29,7 @@ OBJS  = sched.o sys_call.o traps.o asm.o fork.o \
 	signal.o mktime.o
 
 kernel.o: $(OBJS)
-	$(LD) -r -o kernel.o $(OBJS)
+	$(LD) -m elf_i386 -r -o kernel.o $(OBJS)
 	sync
 
 clean:

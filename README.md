@@ -21,8 +21,6 @@
     
     1. 下载并运行 `resources\` 下的一键安装脚本[setup.sh](resources\setup.sh);
 
-    2. 需要自行修改系统的 gcc, cpp 版本，软连接为gcc-3.4，cpp-3.4;或修改源码 Makefile 中指定gcc, cpp 版本。
-
 2. 方式二 (使用docker容器)
 
     1. docker 安装过程不再描述，支持 mac, windows, linux;
@@ -39,7 +37,7 @@
         docker run -t -i -v ${项目的本地路径}:${需要挂载到docker下的路径，例如/home/linux-0.12/} ultraji/ubuntu:os_learn 
         ```
 
-3. [常见编译问题总结](notes/make_problem.md)
+3. 本项目目录下的linux-0.12已经能够在在现在的编译环境(64bit)下编译了。以下内容适合对从oldlinux网站下载到的linux0.1x的代码修改。-> [常见编译问题总结](notes/make_problem.md)
 
 ### bochs 模拟器
 

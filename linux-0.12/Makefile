@@ -7,20 +7,20 @@ RAMDISK = #-DRAMDISK=512
 AS86	=as86 -0 -a
 LD86	=ld86 -0
 
-AS	=as -32
+AS	=as --32
 LD	=ld
-LDFLAGS	=-s -x -M
-CC	=gcc $(RAMDISK)
-CFLAGS	=-Wall -O -fstrength-reduce -fomit-frame-pointer # -fcombine-regs -mstring-insns
-CPP	=cpp -nostdinc -Iinclude
+LDFLAGS	=-m elf_i386 -s -x -Ttext 0 -e startup_32 # 64位系统下链接，需要开启 -m elf_i386
+CC	=gcc-3.4 $(RAMDISK)
+CFLAGS	=-m32 -Wall -O -fstrength-reduce -fomit-frame-pointer # -fcombine-regs -mstring-insns
+CPP	=cpp-3.4 -nostdinc -Iinclude
 
 #
 # ROOT_DEV specifies the default root-device when making the image.
 # This can be either FLOPPY, /dev/xxxx or empty, in which case the
 # default of /dev/hd6 is used by 'build'.
 #
-ROOT_DEV=/dev/hd6
-SWAP_DEV=/dev/hd2
+ROOT_DEV= #/dev/hd6
+SWAP_DEV= #/dev/hd2
 
 ARCHIVES=kernel/kernel.o mm/mm.o fs/fs.o
 DRIVERS =kernel/blk_drv/blk_drv.a kernel/chr_drv/chr_drv.a
@@ -31,7 +31,7 @@ LIBS	=lib/lib.a
 	$(CC) $(CFLAGS) \
 	-nostdinc -Iinclude -S -o $*.s $<
 .s.o:
-	$(AS) -c -o $*.o $<
+	$(AS) -o $*.o $<
 .c.o:
 	$(CC) $(CFLAGS) \
 	-nostdinc -Iinclude -c -o $*.o $<
@@ -39,9 +39,18 @@ LIBS	=lib/lib.a
 all:	Image
 
 Image: boot/bootsect boot/setup tools/system tools/build
-	tools/build boot/bootsect boot/setup tools/system $(ROOT_DEV) \
+	cp -f tools/system system.tmp
+	strip system.tmp
+	objcopy -O binary -R .note -R .comment system.tmp tools/kernel
+	tools/build boot/bootsect boot/setup tools/kernel $(ROOT_DEV) \
 		$(SWAP_DEV) > Image
+	rm system.tmp
+	rm tools/kernel -f
 	sync
+
+#	tools/build boot/bootsect boot/setup tools/system $(ROOT_DEV) \
+#		$(SWAP_DEV) > Image
+#	sync
 
 disk: Image
 	dd bs=8192 if=Image of=/dev/PS0

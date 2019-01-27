@@ -199,14 +199,14 @@ static void scrup(int currcons)
 				__asm__("cld\n\t"
 					"rep\n\t"
 					"movsl\n\t"
-					"movl _video_num_columns,%1\n\t"
+					"movl video_num_columns,%1\n\t"
 					"rep\n\t"
 					"stosw"
 					::"a" (video_erase_char),
 					"c" ((video_num_lines-1)*video_num_columns>>1),
 					"D" (video_mem_start),
 					"S" (origin)
-					:"cx","di","si");
+					);
 				scr_end -= origin-video_mem_start;
 				pos -= origin-video_mem_start;
 				origin = video_mem_start;
@@ -217,21 +217,21 @@ static void scrup(int currcons)
 					::"a" (video_erase_char),
 					"c" (video_num_columns),
 					"D" (scr_end-video_size_row)
-					:"cx","di");
+					);
 			}
 			set_origin(currcons);
 		} else {
 			__asm__("cld\n\t"
 				"rep\n\t"
 				"movsl\n\t"
-				"movl _video_num_columns,%%ecx\n\t"
+				"movl video_num_columns,%%ecx\n\t"
 				"rep\n\t"
 				"stosw"
 				::"a" (video_erase_char),
 				"c" ((bottom-top-1)*video_num_columns>>1),
 				"D" (origin+video_size_row*top),
 				"S" (origin+video_size_row*(top+1))
-				:"cx","di","si");
+				);
 		}
 	}
 	else		/* Not EGA/VGA */
@@ -239,14 +239,14 @@ static void scrup(int currcons)
 		__asm__("cld\n\t"
 			"rep\n\t"
 			"movsl\n\t"
-			"movl _video_num_columns,%%ecx\n\t"
+			"movl video_num_columns,%%ecx\n\t"
 			"rep\n\t"
 			"stosw"
 			::"a" (video_erase_char),
 			"c" ((bottom-top-1)*video_num_columns>>1),
 			"D" (origin+video_size_row*top),
 			"S" (origin+video_size_row*(top+1))
-			:"cx","di","si");
+			);
 	}
 }
 
@@ -260,14 +260,14 @@ static void scrdown(int currcons)
 			"rep\n\t"
 			"movsl\n\t"
 			"addl $2,%%edi\n\t"	/* %edi has been decremented by 4 */
-			"movl _video_num_columns,%%ecx\n\t"
+			"movl video_num_columns,%%ecx\n\t"
 			"rep\n\t"
 			"stosw"
 			::"a" (video_erase_char),
 			"c" ((bottom-top-1)*video_num_columns>>1),
 			"D" (origin+video_size_row*bottom-4),
 			"S" (origin+video_size_row*(bottom-1)-4)
-			:"ax","cx","di","si");
+			);
 	}
 	else		/* Not EGA/VGA */
 	{
@@ -275,14 +275,14 @@ static void scrdown(int currcons)
 			"rep\n\t"
 			"movsl\n\t"
 			"addl $2,%%edi\n\t"	/* %edi has been decremented by 4 */
-			"movl _video_num_columns,%%ecx\n\t"
+			"movl video_num_columns,%%ecx\n\t"
 			"rep\n\t"
 			"stosw"
 			::"a" (video_erase_char),
 			"c" ((bottom-top-1)*video_num_columns>>1),
 			"D" (origin+video_size_row*bottom-4),
 			"S" (origin+video_size_row*(bottom-1)-4)
-			:"ax","cx","di","si");
+			);
 	}
 }
 
@@ -347,7 +347,7 @@ static void csi_J(int currcons, int vpar)
 		"stosw\n\t"
 		::"c" (count),
 		"D" (start),"a" (video_erase_char)
-		:"cx","di");
+		);
 }
 
 static void csi_K(int currcons, int vpar)
@@ -378,7 +378,7 @@ static void csi_K(int currcons, int vpar)
 		"stosw\n\t"
 		::"c" (count),
 		"D" (start),"a" (video_erase_char)
-		:"cx","di");
+		);
 }
 
 void csi_m(int currcons )
@@ -601,7 +601,7 @@ void con_write(struct tty_struct * tty)
 						::"a" (translate[c-32]),
 						"m" (*(short *)pos),
 						"m" (attr)
-						:"ax");
+						);
 					pos += 2;
 					x++;
 				} else if (c==27)
@@ -1017,7 +1017,7 @@ void console_print(const char * b)
 			::"a" (c),
 			"m" (*(short *)pos),
 			"m" (attr)
-			:"ax");
+			);
 		pos += 2;
 		x++;
 	}

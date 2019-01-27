@@ -20,7 +20,7 @@ void wait_for_keypress(void);
 
 /* set_bit uses setb, as gas doesn't recognize setc */
 #define set_bit(bitnr,addr) ({ \
-register int __res __asm__("ax"); \
+register int __res; \
 __asm__("bt %2,%3;setb %%al":"=a" (__res):"a" (0),"r" (bitnr),"m" (*(addr))); \
 __res; })
 

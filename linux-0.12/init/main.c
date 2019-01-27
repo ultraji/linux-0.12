@@ -211,13 +211,12 @@ void main(void)		/* This really IS void, no error here. */
  // pause()系统调用会把任务 0 转换成可中断等待状态，再执行调度函数。但是调度函数
  // 发现系统中没有其他程序可以运行就会切换到任务 0，而不依赖任务 0 的状态。
 	for(;;)
-		//__asm__("int $0x80"::"a" (__NR_pause):"ax");//执行系统调用pause()
-		pause();
+		__asm__("int $0x80"::"a" (__NR_pause));//执行系统调用pause()
 }
 
 //产生格式化信息并输出到标准输出设备stdout(1)，这里是指屏幕上显示。
 //write()中 第一个参数 1 -> stdout，表示将缓冲区的内容输出到标准设备。
-static int printf(const char *fmt, ...)
+static int printw(const char *fmt, ...)
 {
 	va_list args;
 	int i;
@@ -245,9 +244,9 @@ void init(void)
 	(void) dup(0);		//复制句柄，产生句柄2号 -- stderr 标准出错输出设备
 
 //下面打印缓冲区块数和总字节数，每块1024字节，已经主内存区空闲内存字节数。
-	printf("%d buffers = %d bytes buffer space\n\r",NR_BUFFERS,
+	printw("%d buffers = %d bytes buffer space\n\r",NR_BUFFERS,
 		NR_BUFFERS*BLOCK_SIZE);
-	printf("Free mem: %d bytes\n\r",memory_end-main_memory_start);
+	printw("Free mem: %d bytes\n\r",memory_end-main_memory_start);
 
 //下面通过fork()用于创建一个子进程(任务 2)。对于被创建的子进程，fork()将返回 0 值，对于
 //原进程则返回子进程的进程号 pid。
@@ -275,7 +274,7 @@ void init(void)
 	while (1) {
 //如果出错，则显示“初始化创建子程序失败”信息并继续执行。
 		if ((pid=fork())<0) {
-			printf("Fork failed in init\r\n");
+			printw("Fork failed in init\r\n");
 			continue;
 		}
 //新的子进程，关闭句柄(0,1,2)，新创建一个会话并设置进程组号，然后重新打开 /dev/tty0 作为
@@ -292,7 +291,7 @@ void init(void)
 		while (1)
 			if (pid == wait(&i))
 				break;
-		printf("\n\rchild %d died with code %04x\n\r",pid,i);
+		printw("\n\rchild %d died with code %04x\n\r",pid,i);
 		sync();				//同步操作，刷新缓冲区
 	}
 	_exit(0);	/* NOTE! _exit, not exit() */

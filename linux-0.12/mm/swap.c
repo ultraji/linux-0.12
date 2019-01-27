@@ -188,7 +188,7 @@ repeat:
 		:"=a" (__res)
 		:"0" (0),"i" (LOW_MEM),"c" (PAGING_PAGES),
 		"D" (mem_map+PAGING_PAGES-1)
-		:"di","cx","dx");
+		);
 	if (__res >= HIGH_MEMORY)
 		goto repeat;
 	if (!__res && swap_out())

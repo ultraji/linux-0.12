@@ -18,7 +18,7 @@
 #define KBD_FINNISH
 
 .text
-.globl _keyboard_interrupt
+.globl keyboard_interrupt
 
 /*
  * these are for the keyboard read functions
@@ -39,7 +39,7 @@ e0:	.byte 0
  *  keyboard scan-code and converts it into the appropriate
  *  ascii character(s).
  */
-_keyboard_interrupt:
+keyboard_interrupt:
 	pushl %eax
 	pushl %ebx
 	pushl %ecx
@@ -49,8 +49,8 @@ _keyboard_interrupt:
 	movl $0x10,%eax
 	mov %ax,%ds
 	mov %ax,%es
-	movl _blankinterval,%eax
-	movl %eax,_blankcount
+	movl blankinterval,%eax
+	movl %eax,blankcount
 	xorl %eax,%eax		/* %eax is scan code */
 	inb $0x60,%al
 	cmpb $0xe0,%al
@@ -73,7 +73,7 @@ e0_e1:	inb $0x61,%al
 	movb $0x20,%al
 	outb %al,$0x20
 	pushl $0
-	call _do_tty_interrupt
+	call do_tty_interrupt
 	addl $4,%esp
 	pop %es
 	pop %ds
@@ -95,7 +95,7 @@ set_e1:	movb $2,e0
 put_queue:
 	pushl %ecx
 	pushl %edx
-	movl _table_list,%edx		# read-queue for console
+	movl table_list,%edx		# read-queue for console
 	movl head(%edx),%ecx
 1:	movb %al,buf(%edx,%ecx)
 	incl %ecx
@@ -164,9 +164,9 @@ uncaps:	andb $0x7f,mode
 scroll:
 	testb $0x03,mode
 	je 1f
-	call _show_mem
+	call show_mem
 	jmp 2f
-1:	call _show_state
+1:	call show_state
 2:	xorb $1,leds
 	jmp set_leds
 num:	xorb $2,leds
@@ -239,7 +239,7 @@ ok_func:
 	jmp put_queue
 alt_func:
 	pushl %eax
-	call _change_console
+	call change_console
 	popl %eax
 end_func:
 	ret

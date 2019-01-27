@@ -24,7 +24,8 @@ if [ -z `which gcc-3.4` ]; then
 fi
 
 sudo apt-get install -f && echo "[Info]: gcc-3.4 is installed Sucessfully"
-apt-get install gcc-multilib
+
+sudo apt-get install gcc-multilib
 
 echo "Start install as86 ld86"
 

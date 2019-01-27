@@ -1,5 +1,5 @@
-*.o
-*.a
+linux-0.12/**/*.o
+linux-0.12/**/*.a
 linux-0.12/Image
 linux-0.12/System.map
 linux-0.12/boot/bootsect
@@ -9,3 +9,7 @@ linux-0.12/boot/setup.s
 linux-0.12/kernel/chr_drv/keyboard.s
 linux-0.12/tools/build
 linux-0.12/tools/system
+
+resources/bochs/bochs-2.6.9/*
+
+.gitattributes

@@ -1,8 +1,8 @@
 #/bin/bash
 
 bochs_install(){
-    sudo apt-get install build-essential
-    sudo apt-get install bochs bochs-x bochs-sdl
+    sudo apt-get install -y build-essential
+    sudo apt-get install -y bochs bochs-x bochs-sdl
 }
 
 bochs_make_install(){
@@ -14,7 +14,7 @@ bochs_make_install(){
 
     for i in ${INSTALL_LIST[*]}; do 
         ( dpkg -l |grep ${i} &> /dev/null   \
-        || (echo "[Info]: Installing ${i} ..." & sudo apt-get install ${i}))    \
+        || (echo "[Info]: Installing ${i} ..." & sudo apt-get install -y ${i}))    \
         && echo "[Info]: ${i} is installed." || echo "[Error]: ${i} is not installed."
     done
 
@@ -28,7 +28,7 @@ bochs_make_install(){
         cd ${DIR}
         if [ ! -e "${BOCHS}.tar.gz" ]; then
             echo "[Info]: downloading ${BOCHS}.tar.gz..."
-            wget https://downloads.sourceforge.net/project/bochs/bochs/2.6.9/${BOCHS}.tar.gz && \
+            wget -qO- https://downloads.sourceforge.net/project/bochs/bochs/2.6.9/${BOCHS}.tar.gz && \
             echo "[Info]: downloads ${BOCHS}.tar.gz Sucessfully." || (rm ${BOCHS}.tar.gz & echo "[Warning]: downloads ${BOCHS}.tar.gz unsuccessfully !!!" )
         fi
         echo "[Info]: tar ${BOCHS}.tar.gz..."
@@ -39,13 +39,8 @@ bochs_make_install(){
 
     if [ -d "${DIR}/${BOCHS}" ];then
         cd ${DIR}/${BOCHS}
-        ./configure --enable-debugger --enable-disasm
-        make && \
-        ( rm -rf ../bochs-bin && mkdir ../bochs-bin && \
-        cp bochs ../bochs-bin/bochs && \
-        cp bximage ../bochs-bin/bximage && \
-        cp ./bios/BIOS-bochs-latest ../bochs-bin/BIOS-bochs-latest && \
-        cp ./bios/VGABIOS-lgpl-latest ../bochs-bin/VGABIOS-lgpl-latest )
+        ./configure --enable-debugger --enable-disasm &&\
+        make
     fi
 
 }
@@ -66,7 +61,7 @@ env_install(){
         for deb in ${DOWNLOAD_LIST[*]}; do
             if [ ! -e ${GCC_DIR}/${deb} ]; then
                 echo "[Info]: downloading ${deb} ..."
-                wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/${deb} -P ${GCC_DIR} && \
+                wget -qO- http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/${deb} -P ${GCC_DIR} && \
                 echo "[Info]: download ${deb} Sucessfully." || ( rm ${deb} & echo "[Warning]: download ${deb} unsuccessfully !!!" )
             fi
         done

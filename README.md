@@ -1,6 +1,6 @@
 # linux-0.12 源码学习
 
-*-- 参考《Linux内核完全剖析 --基于0.12内核》*
+*参考《Linux内核完全剖析 --基于0.12内核》*
 
 加入中文注释，方便阅读，并**修改部分代码使其能在现在的环境下编译**。
 
@@ -13,7 +13,9 @@
 
 ## 搭建环境篇
 
-`resources` 下的一键脚本 [setup.sh](resources\setup.sh) 适用于 Ubuntu ( 64bit >= 14.04 )。
+### ubuntu (64bit >= 14.04)
+
+ubuntu的用户可以使用`resources` 下的一键脚本 [setup.sh](resources\setup.sh)。
 
 选项说明：
 
@@ -22,18 +24,20 @@
 - `-b` 安装 bochs 模拟器
 - `-bm` 下载和编译 bochs 源码, 生成 bochs 模拟器 (不是必需)
 
-另外，可以选择已创建好的 docker 镜像作为编译环境，适合于 ubuntu 以及其他系统的用户。docker 安装过程不再描述，支持 mac, windows, linux。
+### 其他系统 (包括ubuntu)
+
+其他系统 (包括ubuntu) 的用户可以选择已创建好的 docker 镜像作为实验环境 (已安装 gcc-3.4 编译环境以及 bochs 模拟器)。docker 安装过程不再描述，支持 mac, windows, linux。
 
 1. 首先从 docker hub 中拉取镜像;
 
     ```shell
-    docker pull ultraji/ubuntu:os_learn
+    docker pull ultraji/ubuntu-xfce-novnc:os_learn 
     ```
 
-2. 通过以下命令把源代码目录挂载到docker容器中编译
+2. 运行容器
 
     ```shell
-    docker run -t -i -v ${项目的本地路径}:${挂载路径，例如/home/linux-0.12/} ultraji/ubuntu:os_learn 
+    docker run -d -i -p 6080:6080 ultraji/ubuntu-xfce-novnc:os_learn 
     ```
 
 ## 笔记

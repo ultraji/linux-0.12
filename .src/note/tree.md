@@ -1,0 +1,137 @@
+# 文件树总览
+
+- `boot/` &emsp;把内核加载到内存, 配置系统参数, 最后进入32位保护模式; **属于系统初始化工作之前的准备阶段**。
+    - [bootsect.S](boot\bootsect.S) &emsp;磁盘引导程序
+    - [setup.S](boot\setup.S) &emsp;配置系统参数
+    - [head.s](boot\head.s) &emsp;32位启动程序
+
+- `fs/` &emsp;文件系统,支持MINIX一种文件系统
+    - [bitmap.c](fs\bitmap.c)
+    - [block_dev.c](fs\block_dev.c)
+    - [buffer.c](fs\buffer.c)
+    - [char_dev.c](fs\char_dev.c)
+    - [exec.c](fs\exec.c)
+    - [fcntl.c](fs\fcntl.c)
+    - [file_dev.c](fs\file_dev.c)
+    - [file_table.c](fs\file_table.c)
+    - [inode.c](fs\inode.c)
+    - [ioctl.c](fs\ioctl.c)
+    - [namei.c](fs\namei.c)
+    - [open.c](fs\open.c)
+    - [pipe.c](fs\pipe.c)
+    - [read_write.c](fs\read_write.c)
+    - [select.c](fs\select.c)
+    - [stat.c](fs\stat.c)
+    - [super.c](fs\super.c)
+    - [truncate.c](fs\truncate.c)
+    - [Makefile](fs\Makefile)
+
+- `include/` &emsp;有关系统调用的程序
+    - `asm/`
+        - [io.h](include\asm\io.h)
+        - [memory.h](include\asm\memory.h)
+        - [segment.h](include\asm\segment.h)
+        - [system.h](include\asm\system.h)
+    - `linux/`
+        - [config.h](include\linux\config.h)
+        - [fdreg.h](include\linux\fdreg.h)
+        - [fs.h](include\linux\fs.h)
+        - [hdreg.h](include\linux\hdreg.h)
+        - [head.h](include\linux\head.h)
+        - [kernel.h](include\linux\kernel.h)
+        - [math_emu.h](include\linux\math_emu.h)
+        - [mm.h](include\linux\mm.h)
+        - [sched.h](include\linux\sched.h)
+        - [sys.h](include\linux\sys.h)
+        - [tty.h](include\linux\tty.h)
+    - `sys/`
+        - [param.h](include\sys\param.h)
+        - [resource.h](include\sys\resource.h)
+        - [stat.h](include\sys\stat.h)
+        - [time.h](include\sys\time.h)
+        - [times.h](include\sys\times.h)
+        - [types.h](include\sys\types.h)
+        - [utsname.h](include\sys\utsname.h)
+        - [wait.h](include\sys\wait.h)
+    - [a.out.h](include\a.out.h)
+    - [const.h](include\const.h)
+    - [ctype.h](include\ctype.h)
+    - [errno.h](include\errno.h)
+    - [fcntl.h](include\fcntl.h)
+    - [signal.h](include\signal.h)
+    - [stddef.h](include\stddef.h)
+    - [string.h](include\string.h)
+    - [termios.h](include\termios.h)
+    - [time.h](include\time.h)
+    - [unistd.h](include\unistd.h)
+    - [utime.h](include\utime.h)
+
+- `init/` &emsp;完成所有初始化过程, 进入正常工作, 创建用于shell的进程
+    - [main.c](init\main.c)
+
+- `kernel/` 
+    - `blk_drv/`
+        - `RCS/`
+            - [hd.c,v](kernel\blk_drv\RCS\hd.c,v)
+        - [blk.h](kernel\blk_drv\blk.h)
+        - [floppy.c](kernel\blk_drv\floppy.c)
+        - [hd.c](kernel\blk_drv\hd.c)
+        - [ll_rw_blk.c](kernel\blk_drv\ll_rw_blk.c)
+        - [ramdisk.c](kernel\blk_drv\ramdisk.c)
+        - [Makefile](kernel\blk_drv\Makefile)
+    - `chr_drv/`
+        - [console.c](kernel\chr_drv\console.c)
+        - [keyboard.S](kernel\chr_drv\keyboard.S)
+        - [pty.c](kernel\chr_drv\pty.c)
+        - [rs_io.s](kernel\chr_drv\rs_io.s)
+        - [serial.c](kernel\chr_drv\serial.c)
+        - [tty_io.c](kernel\chr_drv\tty_io.c)
+        - [tty_ioctl.c](kernel\chr_drv\tty_ioctl.c)
+        - [Makefile](kernel\chr_drv\Makefile)
+    - `math/`
+        - [add.c](kernel\math\add.c)
+        - [compare.c](kernel\math\compare.c)
+        - [convert.c](kernel\math\convert.c)
+        - [div.c](kernel\math\div.c)
+        - [ea.c](kernel\math\ea.c)
+        - [error.c](kernel\math\error.c)
+        - [get_put.c](kernel\math\get_put.c)
+        - [math_emulate.c](kernel\math\math_emulate.c)
+        - [mul.c](kernel\math\mul.c)
+        - [Makefile](kernel\math\Makefile)
+    - [asm.s](kernel\asm.s)
+    - [exit.c](kernel\exit.c)
+    - [fork.c](kernel\fork.c)
+    - [mktime.c](kernel\mktime.c)
+    - [panic.c](kernel\panic.c)
+    - [printk.c](kernel\printk.c)
+    - [sched.c](kernel\sched.c)
+    - [signal.c](kernel\signal.c)
+    - [sys_call.s](kernel\sys_call.s)
+    - [sys.c](kernel\sys.c)
+    - [traps.c](kernel\traps.c)
+    - [vsprintf.c](kernel\vsprintf.c)
+
+- `lib/` &emsp;主要向编译系统等系统程序提供接口函数
+    - [_exit.c](lib\_exit.c)
+    - [close.c](lib\close.c)
+    - [ctype.c](lib\ctype.c)
+    - [dup.c](lib\dup.c)
+    - [errno.c](lib\errno.c)
+    - [execve.c](lib\execve.c)
+    - [malloc.c](lib\malloc.c)
+    - [open.c](lib\open.c)
+    - [setsid.c](lib\setsid.c)
+    - [string.c](lib\string.c)
+    - [wait.c](lib\wait.c)
+    - [write.c](lib\write.c)
+    - [Makefile](lib\Makefile)
+- `mm/`
+    - [memory.c](mm\memory.c)
+    - [page.s](mm\page.s)
+    - [swap.c](swap.c)
+
+- `tools/`
+    - [build.c](tools\build.c) &emsp;用于将磁盘引导程序块与主要内核模块连接成一个内核映像
+
+- [Makefile](Makefile)

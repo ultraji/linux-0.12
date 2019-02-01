@@ -1,0 +1,195 @@
+# 编译linux-0.12源码时碰到的问题记录
+
+本项目目录下的linux-0.12已经能够在在现在的编译环境下编译了。以下内容适合对从oldlinux网站下载到的linux0.1x的代码修改。
+
+## 如何修改源代码，使其能在现在的编译环境下编译
+
+1. 修改所有Makefile, 将 `AR =gar` 改为 `AS =ar`, 将 `AS =gas` 改为 `AS =as`, 将 `LD =gld` 改为 `LD =ld`。
+
+    注 : gas和gld已经改名了。
+
+2. 修改所有Makefile, 将 ```$(AS) -c -o $*.o $<``` 中的 `-c` 去除。
+
+    注 : as 不再使用 `-c` 选项。
+
+3. 修改所有 Makefile, 将 `CFLAGS  =` 中的 `-fcombine-regs -mstring-insns` 注释掉或删掉。
+
+    注 : `-fcombine-regs`已被去除, `-mstring-insns`是Linus本人增加的选项。
+
+4. 将所有 `.align n` 改为 `.align 2^n`, 例如`.align 3` 改为 `.align 8`。
+
+    注 : align 的用法已经改变, 之前为对内存地址的幂次值，现在需要给出对齐的整数地址。
+
+5. 将所有 ```__asm__("ax")```去掉, 并且, 例如```:"si","di","ax","cx");``` 改为 ```);``` 。
+
+    注 : as的不断优化, 不再需要人为的指定一个变量所使用的CPU寄存器。
+
+6. 将所有汇编语言引用的C变量前的下划线`_`去掉(包括C文件内嵌的汇编代码)。例如 head.s 中 `.globl _idt,_gdt,_pg_dir,_tmp_floppy_area` 改为 `.globl idt,gdt,pg_dir,tmp_floppy_area`。
+    主要文件：`head.s`, `kernel\asm.s`, `kernel\sys_call.s`, `kernel\chr_drv\keyboard.S`, `kernel\chr_drv\rs_io.s`,`kernel\chr_drv\console.c`, `include\linux\sched.h`
+
+    注 : 现在的gcc能直接识别汇编中引用的C变量, 不需要再加下划线。
+
+7. 将`init\main.c`中的`printf`改成`printw`。
+
+    注 : 由于GCC会对printf进行优化，把无参的printf优化成puts，而linux0.12的libc中又没有实现puts才会导致新的问题
+
+8. 在`tools\build.c`中加入
+
+    ```c
+    #ifndef MAJOR
+        #define MAJOR(a) (((unsigned)(a))>>8)
+    #endif
+    #ifndef MINOR
+        #define MINOR(a) ((a)&0xff)
+    #endif
+    ```
+
+9. 主目录Makefile中修改
+
+    ```
+    ROOT_DEV=# /dev/hd6
+    SWAP_DEV=# /dev/hd2
+    ```
+
+10. 给head.s的 .text 段添加一句 `.globl startup_32`，然后给主目录下的 Makefile 中的ld加上选项 `-e startup_32` 以指定入口点, 添加 `-Ttext 0` 选项使`startup_32`标号对应的地址为0x0。
+
+11. 注释`tool\build.c` 中对elf头的判断
+
+    ```c
+	// if (read(id,buf,GCC_HEADER) != GCC_HEADER)
+	// 	die("Unable to read header of 'system'");
+	// if (((long *) buf)[5] != 0)
+	// 	die("Non-GCC header of 'system'");
+    ```
+
+    并修改主Makefile
+
+    ```
+    Image: boot/bootsect boot/setup tools/system tools/build
+        cp -f tools/system system.tmp
+        strip system.tmp
+        objcopy -O binary -R .note -R .comment system.tmp tools/kernel
+        tools/build boot/bootsect boot/setup tools/kernel $(ROOT_DEV) \
+            $(SWAP_DEV) > Image
+        rm system.tmp
+        rm tools/kernel -f
+        sync
+    ```
+
+
+说明: 所有 Makefile 指的是 主目录下以及每一个子目录下的Makefile
+
+## 常见编译问题的排查
+
+1. ```make: as86: Command not finded```
+
+    - 原因 : 
+    
+        as86 汇编器未安装
+
+    - 解决 : 
+
+        ```shell
+        sudo apt-get install bin86
+        ```
+
+2. ```gas: Command not finded```
+
+    - 原因 : 
+    
+        gar、gas、gld 的名称已经过时
+
+    - 解决 ：
+        
+        修改所有 Makefile 文件, 将 `AR =gar` 修改为 `AS =ar`, 将 `AS =gas` 修改为 `AS =as`, 将 `LD =gld` 修改为 `LD =ld`
+
+3. ```Error: unsupported instruction `mov'```
+
+    - 原因 :
+
+        在64位机器上编译，需要告诉编译器要编译32位的code
+
+    - 解决 :
+
+        修改所有 Makefile 文件, 将 `AS =gas` 修改为 `AS =as --32`
+
+4. ```Error: alignment not a power of 2```
+
+    - 原因 : 
+
+        现在GNU as直接是写出对齐的值而非2的次方值了
+
+    - 解决 : 
+
+        找到对应位置， 将`.align n` 应该改为 `.align 2^n`, 例如 `.align 3` 应该改为 `.align 8`。
+
+5. ```error: invalid option `string-insns'```  
+```error: unrecognized command line option "-fcombine-regs"```
+
+    - 原因 : 
+
+        现在GCC已经不支持了。
+
+    - 解决 ：
+
+        修改所有 Makefile 文件, 将 `CFLAGS  =` 中的 `-fcombine-regs -mstring-insns` 注释掉或删掉。
+
+6. ```error: can't find a register in class `AREG' while reloading `asm'```
+
+    - 原因 : 
+
+        as的不断改进，不需要人工指定一个变量需要的CPU寄存器。代码中所有的 `__asm__("ax")`都需要去掉。
+
+    - 解决 :
+
+        例如 ```:"si","di","ax","cx");``` 改为 ```);```。
+
+7. ```Error: invalid instruction suffix for `pushf'```
+
+    - 原因 : 
+
+        在64位机器上编译，需要告诉编译器要编译32位的code。
+
+    - 解决 ：
+
+        修改所有makefile, 在 `CFLAGS =` 中加入`-m32`
+
+8. ```from format elf32-i386 (sched.o) to format elf64-x86-64 (kernel.o)```
+
+    - 原因 ：
+    
+        在64位机器上编译导致。
+
+    - 解决 : 
+    
+        在x86-64上链接出 x86 文件，在相应的Makefile中的 ld 中添加 `-m elf_i386` 选项。
+
+9. ```main.c:(.text+0x4dd): undefined reference to `puts'```
+
+    - 原因 : 
+    
+        由于GCC会对printf进行优化，把无参的printf优化成puts，而linux0.12的libc中又没有实现puts才会导致新的问题。
+
+    - 解决 : 
+    
+        将`init\main.c`中的`printf`改成`printw`
+
+10. ```ld: warning: cannot find entry symbol _start; defaulting to 0000000008048098```
+
+    - 原因 : 
+    
+        ld在将所有目标文件链接起来时，不知道程序的入口点在哪里。
+
+    - 解决 : 
+    
+        给head.s的 .text 段添加一句 `.globl startup_32`，然后给 Makefile 中的ld加上选项 `-e startup_32` 以指定入口点, 添加 `-Ttext 0` 选项使`startup_32`标号对应的地址为`0x0`。
+
+11. `Non-Gcc header of ‘system’`
+
+    - 原因 : 
+    
+        build.c文件对elf头的判断。
+
+    - 解决 : 
+    
+        参照步骤10，11。

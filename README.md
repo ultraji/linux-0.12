@@ -7,26 +7,27 @@
 | 文件夹        | 说明                  |
 | ------------ | -------------------- |
 | `linux-0.12` | linux-0.12源代码      |
-| `note`      | 学习笔记              |
-| `source`  | 一些资源              |
 | `oslab`      | 实验目录              |
+| `.src`       | 一些资源和笔记         |
 
-## 搭建环境篇
+## 实验篇
 
-### ubuntu (64bit >= 14.04)
+### 一、环境搭建
 
-ubuntu的用户可以使用`resources` 下的一键脚本 [setup.sh](resources\setup.sh)。
+#### ubuntu(64bit>=14.04)
+
+ubuntu用户可以使用`.src/setup`目录下的一键搭建脚本[setup.sh](.src/setup/setup.sh)。
 
 选项说明：
 
-- 不带参数 安装编译环境, 安装 bochs 虚拟机
-- `-e` 安装源码的编译环境(gcc-3.4)
-- `-b` 安装 bochs 模拟器
-- `-bm` 下载和编译 bochs 源码, 生成 bochs 模拟器 (不是必需)
+- 不带参数 &emsp;安装编译环境, 安装bochs虚拟机
+- `-e` &emsp;安装编译环境(gcc-3.4,bin86等)
+- `-b` &emsp;安装bochs模拟器
+- `-bm` &emsp;下载和编译bochs源码, 生成bochs模拟器(一般用不到)
 
-### 其他系统 (包括ubuntu)
+#### 其他系统(ubuntu也适用)
 
-其他系统 (包括ubuntu) 的用户可以选择已创建好的 docker 镜像作为实验环境 (已安装 gcc-3.4 编译环境以及 bochs 模拟器)。docker 安装过程不再描述，支持 mac, windows, linux。
+其他系统的用户可以选择已创建好的docker镜像作为实验环境(已安装gcc-3.4编译环境以及bochs模拟器)。docker安装过程不再描述，支持mac,windows,linux。
 
 1. 首先从 docker hub 中拉取镜像;
 
@@ -50,6 +51,7 @@ ubuntu的用户可以使用`resources` 下的一键脚本 [setup.sh](resources\s
 
 ## 笔记
 
-1. [源代码文件树](notes/tree.md)
+1. [常见编译问题总结](.src/notes/make_problem.md) &emsp;如需对从 oldlinux 下载的 linux-0.1x 的代码进行修改, 可参考。
 
-2. [常见编译问题总结](notes/make_problem.md) &emsp;如需对从 oldlinux 下载的 linux-0.1x 的代码进行修改, 可参考。
+2. [源代码文件树](.src/notes/tree.md)
+

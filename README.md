@@ -7,8 +7,8 @@
 | 文件夹        | 说明                  |
 | ------------ | -------------------- |
 | `linux-0.12` | linux-0.12源代码      |
-| `notes`      | 学习笔记              |
-| `resources`  | 一些资源              |
+| `note`      | 学习笔记              |
+| `source`  | 一些资源              |
 | `oslab`      | 实验目录              |
 
 ## 搭建环境篇
@@ -34,11 +34,19 @@ ubuntu的用户可以使用`resources` 下的一键脚本 [setup.sh](resources\s
     docker pull ultraji/ubuntu-xfce-novnc:os_learn 
     ```
 
-2. 运行容器
+2. 运行容器, 例如将本地项目目录C盘下 linux-0.12 挂载到 ubuntu用户的桌面下; 
 
     ```shell
-    docker run -d -i -p 6080:6080 ultraji/ubuntu-xfce-novnc:os_learn 
+    docker run -t -i -p 6080:6080 -v /c/linux-0.12:/home/ubuntu/Desktop/linux-0.12 ultraji/ubuntu-xfce-novnc:os_learn
     ```
+
+3. 默认不启动VNC服务, 运行 home/ubuntu 目录下 vnc_startup.sh 脚本启动VNC服务。开启vncserver后就可以通过浏览器输入```http://localhost:6080/vnc.html```访问桌面系统了。
+
+    - vnc登陆密码: 123456
+    - 默认用户: ubuntu
+    - 用户密码: 123456
+
+    ![docker](.src/pic/docker.png)
 
 ## 笔记
 

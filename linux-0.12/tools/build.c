@@ -31,7 +31,7 @@
 #include <unistd.h>	/* contains read/write */
 #include <fcntl.h>
 
-// 该内容由 ultraji 加入，非源码内容，防止编译时报错
+/* MAJOR、MINOR的声明由ultraji加入，防止编译时报错 */
 #ifndef MAJOR
 	#define MAJOR(a) (((unsigned)(a))>>8)
 #endif

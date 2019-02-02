@@ -1,1 +1,0 @@
-./bochs -q -f ./bochsrc.bxrc

@@ -20,28 +20,28 @@ ubuntu用户可以使用`.src/setup`目录下的一键搭建脚本[setup.sh](.sr
 
 选项说明：
 
-- 不带参数 &emsp;安装编译环境, 安装bochs虚拟机
-- `-e` &emsp;安装编译环境(gcc-3.4,bin86等)
+- 不带参数 &emsp;安装编译环境以及bochs模拟器
+- `-e` &emsp;安装编译环境(gcc-3.4，bin86等)
 - `-b` &emsp;安装bochs模拟器
-- `-bm` &emsp;下载和编译bochs源码, 生成bochs模拟器(一般用不到)
+- `-bm` 下载和编译bochs源码，生成bochs模拟器(一般用不到)
 
 #### 其他系统(ubuntu也适用)
 
-其他系统的用户可以选择已创建好的docker镜像作为实验环境(已安装gcc-3.4编译环境以及bochs模拟器)。docker安装过程不再描述，支持mac,windows,linux。
+其他系统的用户可以选择已创建好的docker镜像作为实验环境(已安装gcc-3.4编译环境以及bochs模拟器)。docker安装过程不再描述，支持mac，windows，linux。
 
-1. 首先从 docker hub 中拉取镜像;
+1. 首先从docker hub中拉取镜像;
 
     ```shell
     docker pull ultraji/ubuntu-xfce-novnc:os_learn 
     ```
 
-2. 运行容器, 例如将本地项目目录C盘下 linux-0.12 挂载到 ubuntu用户的桌面下; 
+2. 运行容器, 例如将本地项目目录C盘下`linux-0.12`挂载到ubuntu用户的桌面下; 
 
     ```shell
     docker run -t -i -p 6080:6080 -v /c/linux-0.12:/home/ubuntu/Desktop/linux-0.12 ultraji/ubuntu-xfce-novnc:os_learn
     ```
 
-3. 默认不启动VNC服务, 运行 home/ubuntu 目录下 vnc_startup.sh 脚本启动VNC服务。开启vncserver后就可以通过浏览器输入```http://localhost:6080/vnc.html```访问桌面系统了。
+3. 默认不启动VNC服务, 运行`home/ubuntu`目录下`vnc_startup.sh`脚本启动VNC服务。开启vncserver后就可以通过浏览器输入```http://localhost:6080/vnc.html```访问桌面系统了。
 
     - vnc登陆密码: 123456
     - 默认用户: ubuntu
@@ -49,9 +49,10 @@ ubuntu用户可以使用`.src/setup`目录下的一键搭建脚本[setup.sh](.sr
 
     ![docker](.src/pic/docker.png)
 
-## 笔记
+## 踩坑篇
 
-1. [常见编译问题总结](.src/notes/make_problem.md) &emsp;如需对从 oldlinux 下载的 linux-0.1x 的代码进行修改, 可参考。
+1. [常见编译问题总结](.src/notes/编译源码的问题记录.md) &emsp;如需对从oldlinux下载的linux-0.1x的代码进行修改，可参考。
 
-2. [源代码文件树](.src/notes/tree.md)
+2. [源码文件目录说明](.src/notes/源码文件目录说明.md)
 
+3. [Linux0.12的启动过程](.src/notes/Linux0.12的启动过程.md)

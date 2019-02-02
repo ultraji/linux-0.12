@@ -1,13 +1,12 @@
 ! SYS_SIZE is the number of clicks (16 bytes) to be loaded.
 ! 0x3000 is 0x30000 bytes = 196kB, more than enough for current
 ! versions of linux
-! SYS_SIZE 是要加载的系统模块长度（单位是节，每节有16字节）。
-! 即 0x30000 bytes = 192 KB（估算，以1000为单位，则是196KB），对于当前的
-! 版本空间已足够了。
-! 例如，当该值为 0x8000 时，表示内核最大为512KB。
+! SYS_SIZE 是要加载的系统模块长度的节数（每节有16字节）。
+! 即 0x3000 节 就等于 0x30000 bytes = 192 KB，对于当前的
+! 版本空间已足够了。例如，当该值为 0x8000 时，表示内核最大为512KB。
 
 #include <linux/config.h>
-! 该头文件里定义了内核用到的一些常数符号和 Linus 自己使用的默认硬盘默认参数块。
+! 该头文件里定义了内核用到的一些常数符号和Linus自己使用的默认硬盘默认参数块。
 
 SYSSIZE = DEF_SYSSIZE
 !
@@ -522,6 +521,7 @@ swap_dev:
 	.word SWAP_DEV
 root_dev:
 	.word ROOT_DEV
+
 ! 下面是启动盘具有有效引导扇区的标志。
 boot_flag:
 	.word 0xAA55

@@ -9,3 +9,5 @@ linux-0.12/boot/setup.s
 linux-0.12/kernel/chr_drv/keyboard.s
 linux-0.12/tools/build
 linux-0.12/tools/system
+linux-0.12/tools/kernel
+oslab/bochsout.txt

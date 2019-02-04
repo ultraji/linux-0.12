@@ -11,18 +11,18 @@
 ! system to read them from there before the area is overwritten
 ! for buffer-blocks.
 !
-!  setup.s 负责从 BIOS 中获取系统数据，并将这些数据放到系统内存的适当地方。
-! 此时 setup.s 和 system 已经由 bootsect 引导块加载到内存中。
-!
-! 这段代码询问bios 有关内存/磁盘/其它参数，并将这些参数放到一个“安全的”地
-! 方：0x90000 - 0x901FF，也即原来 bootsect 代码块曾经在的地方，然后在被缓冲
-! 块覆盖掉之前由保护模式的 system 读取。
+;  setup.s 负责从 BIOS 中获取系统数据，并将这些数据放到系统内存的适当地方。
+; 此时 setup.s 和 system 已经由 bootsect 引导块加载到内存中。
+;
+; 这段代码询问bios 有关内存/磁盘/其它参数，并将这些参数放到一个“安全的”地
+; 方：0x90000 - 0x901FF，也即原来 bootsect 代码块曾经在的地方，然后在被缓冲
+; 块覆盖掉之前由保护模式的 system 读取。
 !
 
 ! NOTE! These had better be the same as in bootsect.s!
-! 以下这些参数最好和bootsect.s 中的相同！
+; 以下这些参数最好和bootsect.s 中的相同！
 #include <linux/config.h>
-! config.h 中定义了 DEF_INITSEG = 0x9000，DEF_SYSSEG = 0x1000，DEF_SETUPSEG = 0x9020。
+; config.h 中定义了 DEF_INITSEG = 0x9000，DEF_SYSSEG = 0x1000，DEF_SETUPSEG = 0x9020。
 INITSEG  = DEF_INITSEG	! we move boot here - out of the way
 SYSSEG   = DEF_SYSSEG	! system loaded at 0x10000 (65536).
 SETUPSEG = DEF_SETUPSEG	! this is the current segment
@@ -41,55 +41,56 @@ start:
 
 ! ok, the read went well so we get current cursor position and save it for
 ! posterity.
-! ok，整个读磁盘过程都正常，现在将光标位置保存以备今后使用。
+; ok，整个读磁盘过程都正常，现在将光标位置保存以备今后使用。
 
-! 将ds 置成#INITSEG(0x9000)。这已经在 bootsect 程序中设置过，但是现在
-! 是 setup 程序，Linus 觉得需要再重新设置一下。
-	mov	ax,#INITSEG	! this is done in bootsect already, but...
+; 将ds置成#INITSEG(0x9000)。这已经在 bootsect 程序中设置过，但是现在
+; 是 setup 程序，Linus 觉得需要再重新设置一下。
+	mov	ax,#INITSEG		! this is done in bootsect already, but...
 	mov	ds,ax
 
 ! Get memory size (extended mem, kB)
-! 取扩展内存的大小值(KB)
-! 利用 BIOS 中断 0x15 功能号 ah = 0x88 取系统所含扩展内存大小并保存在内存 0x90002 处
-! 返回：ax = 从0x100000（1M）处开始的扩展内存大小(KB)。
-! 若出错则CF 置位，ax = 出错码。
+; 取扩展内存的大小值(KB)
+; 利用 BIOS 中断 0x15 功能号 ah = 0x88 取系统所含扩展内存大小并保存在内存 0x90002 处
+; 返回：ax = 从0x100000（1M）处开始的扩展内存大小(KB)。
+; 若出错则CF 置位，ax = 出错码。
 	mov	ah,#0x88
 	int	0x15
 	mov	[2],ax
 
 ! check for EGA/VGA and some config parameters
-! 调用BIOS 中断0x10，附加功能选择 -取方式信息
-! 功能号：ah = 0x12，bl = 0x10
-! 返回：bh = 显示状态
-! (0x00 - 彩色模式，I/O 端口=0x3dX)
-! (0x01 - 单色模式，I/O 端口=0x3bX)
-! bl = 安装的显示内存
-! (0x00 - 64k, 0x01 - 128k, 0x02 - 192k, 0x03 = 256k)
-! cx = 显示卡特性参数(参见程序后的说明)。
+; 调用BIOS 中断0x10，附加功能选择 -取方式信息
+; 功能号：ah = 0x12，bl = 0x10
+; 返回：bh = 显示状态
+; (0x00 - 彩色模式，I/O 端口=0x3dX)
+; (0x01 - 单色模式，I/O 端口=0x3bX)
+; bl = 安装的显示内存
+; (0x00 - 64k, 0x01 - 128k, 0x02 - 192k, 0x03 = 256k)
+; cx = 显示卡特性参数(参见程序后的说明)。
 
 	mov	ah,#0x12
 	mov	bl,#0x10
 	int	0x10
-	mov	[8],ax 		! 未知
-	mov	[10],bx 	! 0x9000A = 安装的显示内存，0x9000B = 显示状态(彩色/单色)
-	mov	[12],cx 	! 0x9000C = 显示卡特性参数。
-	! 检测屏幕当前行列值。若显示卡是VGA卡，则请求用户选择显示行列值，并保存到 0x9000E 处
-	mov	ax,#0x5019  ! 预设行列值(ah = 80 列，al = 25 行)
-	cmp	bl,#0x10 	! 
+	mov	[8],ax 		; 未知
+	mov	[10],bx 	; 0x9000A = 安装的显示内存，0x9000B = 显示状态(彩色/单色)
+	mov	[12],cx 	; 0x9000C = 显示卡特性参数。
+	; 检测屏幕当前行列值。若显示卡是VGA卡，则请求用户选择显示行列值，并保存到 0x9000E 处
+	mov	ax,#0x5019  ; 预设行列值(ah = 80 列，al = 25 行)
+	cmp	bl,#0x10 
 	je	novga
 	call	chsvga
-novga:	mov	[14],ax ! 保存屏幕当前行列值 (0x9000E，0x9000F)。
-	! 获取光标位置，并保存在内存 0x90000 处。(2 字节)
-	! BIOS 中断 0x10 功能号 ah = 0x03，读光标位置。
+novga:	mov	[14],ax ; 保存屏幕当前行列值 (0x9000E，0x9000F)。
+	
+	; 获取光标位置，并保存在内存 0x90000 处。(2 字节)
+	; BIOS 中断 0x10 功能号 ah = 0x03，读光标位置。
 	mov	ah,#0x03	! read cursor pos
 	xor	bh,bh
 	int	0x10		! save it in known place, con_init fetches
 	mov	[0],dx		! it from 0x90000.
 	
 ! Get video-card data:
-! 调用BIOS 中断0x10，功能号 ah = 0x0f
-! 返回：ah = 字符列数，al = 显示模式，bh = 当前显示页。
-! 0x90004(1 字)存放当前页，0x90006 显示模式，0x90007 字符列数。	
+; 调用BIOS 中断0x10，功能号 ah = 0x0f
+; 返回：ah = 字符列数，al = 显示模式，bh = 当前显示页。
+; 0x90004(1 字)存放当前页，0x90006 显示模式，0x90007 字符列数。	
 	mov	ah,#0x0f
 	int	0x10
 	mov	[4],bx		! bh = display page
@@ -273,15 +274,15 @@ end_move:
 	lmsw	ax		! This is it!		!通过以上 2 行指令，已经开启了保护模式
 	jmpi	0,8		! jmp offset 0 of segment 8 (cs)
 
-! 我们已经将system 模块移动到 0x00000 开始的地方，所以这里的偏移地址是 0 。这里的段
-! 值的8 已经是保护模式下的段选择符了，用于选择描述符表和描述符表项以及所要求的特权级。
-! 段选择符长度为 16 位（2 字节）；位 0 - 1 表示请求的特权级 0 - 3 ，linux 操作系统只
-! 用到两级：0 级（系统级）和3 级（用户级）；位 2 用于选择全局描述符表(0)还是局部描
-! 述符表(1)；位 3 - 15 是描述符表项的索引，指出选择第几项描述符。所以段选择符
-! 8(0b0000,0000,0000,1000)表示请求特权级 0、使用全局描述符表中的第 1 项，该项指出
-! 代码的基地址是 0，因此这里的跳转指令就会去执行 system 中的代码。
+; 我们已经将system 模块移动到 0x00000 开始的地方，所以这里的偏移地址是 0 。这里的段
+; 值的8 已经是保护模式下的段选择符了，用于选择描述符表和描述符表项以及所要求的特权级。
+; 段选择符长度为 16 位（2 字节）；位 0 - 1 表示请求的特权级 0 - 3 ，linux 操作系统只
+; 用到两级：0 级（系统级）和3 级（用户级）；位 2 用于选择全局描述符表(0)还是局部描
+; 述符表(1)；位 3 - 15 是描述符表项的索引，指出选择第几项描述符。所以段选择符
+; 8(0b0000,0000,0000,1000)表示请求特权级 0、使用全局描述符表中的第 1 项，该项指出
+; 代码的基地址是 0，因此这里的跳转指令就会去执行 system 中的代码。
 
-!!!!!!!!!!!!!!!!!!!! 程序到这就结束了
+;;;;;;;; 程序到这就结束了
 
 ! This routine checks that the keyboard command queue is empty
 ! No timeout is used - if this hangs there is something wrong with
@@ -296,9 +297,9 @@ empty_8042:
 ! Routine trying to recognize type of SVGA-board present (if any)
 ! and if it recognize one gives the choices of resolution it offers.
 ! If one is found the resolution chosen is given by al,ah (rows,cols).
-!!!!!!!!!!!!!!!!! 注意: 以下代码牵涉到众多显卡端口信息，比较复杂。但跟
-!!!!!!!!!!!!!!!!! 内核运行关系不大，所以可以选择跳过不看。具体内容可以
-!!!!!!!!!!!!!!!!! 参考《Linux内核完全剖析 - 基于 0.12 内核》
+
+; 注意: 以下代码牵涉到众多显卡端口信息，比较复杂。但跟内核运行关系不大，所以可以选择
+; 跳过不看。具体内容可以参考《Linux内核完全剖析 - 基于 0.12 内核》
 chsvga:	cld
 	push	ds
 	push	cs
@@ -307,7 +308,8 @@ chsvga:	cld
 	mov	es,ax
 	lea	si,msg1
 	call	prtstr
-nokey:	in	al,#0x60
+nokey:	
+	in	al,#0x60
 	cmp	al,#0x82
 	jb	nokey
 	cmp	al,#0xe0
@@ -576,7 +578,7 @@ nozero:	sub	al,#0x80
 	lodsw
 	pop	ds
 	ret
-! 若都不是上面检测地显示卡，我们就只好采用默认地 80 * 25 的标准行列值。
+; 若都不是上面检测地显示卡，我们就只好采用默认地 80 * 25 的标准行列值。
 novid7:	pop	ds	! Here could be code to support standard 80x50,80x30
 	mov	ax,#0x5019	
 	ret
@@ -651,7 +653,7 @@ docr:	push	ax
 	pop	cx
 	pop	ax
 	ret	
-!!!!!!!!!!!!!!!!! 跟显示卡相关代码至此结束
+; 跟显示卡相关代码至此结束
 
 	
 gdt:
@@ -667,17 +669,17 @@ gdt:
 	.word	0x9200		! data read/write
 	.word	0x00C0		! granularity=4096, 386
 
-! 加载中断描述符表寄存器 idtr 的指令 lidt 要求的 6 字节操作数。
+; 加载中断描述符表寄存器 idtr 的指令 lidt 要求的 6 字节操作数。
 idt_48:
 	.word	0			! idt limit=0
 	.word	0,0			! idt base=0L
 
-! 加载全局描述符表寄存器 gdtr 的指令 lgdt 要求的 6 字节操作数。
+; 加载全局描述符表寄存器 gdtr 的指令 lgdt 要求的 6 字节操作数。
 gdt_48:
 	.word	0x800		! gdt limit=2048, 256 GDT entries 	! 表限长 2k，8个字节等于1个描述符，共有256项
 	.word	512+gdt,0x9	! gdt base = 0X9xxxx 	! 0x90200 + gdt
 
-!!!!!!!!!!! 以下跟显示卡相关
+; 以下跟显示卡相关
 
 msg1:		.ascii	"Press <RETURN> to see SVGA-modes available or any other key to continue."
 		db	0x0d, 0x0a, 0x0a, 0x00
@@ -692,7 +694,7 @@ idgenoa:	.byte	0x77, 0x00, 0x66, 0x99
 idparadise:	.ascii	"VGA="
 
 ! Manufacturer:	  Numofmodes:	Mode:
-! 厂家：			模式数量：		模式列表：
+; 厂家：			模式数量：		模式列表：
 moati:		.byte	0x02,	0x23, 0x33 
 moahead:	.byte	0x05,	0x22, 0x23, 0x24, 0x2f, 0x34
 mocandt:	.byte	0x02,	0x60, 0x61
@@ -705,7 +707,7 @@ motseng:	.byte	0x05,	0x26, 0x2a, 0x23, 0x24, 0x22
 movideo7:	.byte	0x06,	0x40, 0x43, 0x44, 0x41, 0x42, 0x45
 
 !			msb = Cols lsb = Rows:
-!			高字节 = 列数 低字节 = 行数
+;			高字节 = 列数 低字节 = 行数
 dscati:		.word	0x8419, 0x842c
 dscahead:	.word	0x842c, 0x8419, 0x841c, 0xa032, 0x5042
 dsccandt:	.word	0x8419, 0x8432
@@ -717,7 +719,7 @@ dsctrident:	.word 	0x501e, 0x502b, 0x503c, 0x8419, 0x841e, 0x842b, 0x843c
 dsctseng:	.word	0x503c, 0x6428, 0x8419, 0x841c, 0x842c
 dscvideo7:	.word	0x502b, 0x503c, 0x643c, 0x8419, 0x842c, 0x841c
 
-!!!!!!!!!!! 显示卡相关 到这结束	
+; 显示卡相关 到这结束	
 
 .text
 endtext:

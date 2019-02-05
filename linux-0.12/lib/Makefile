@@ -13,7 +13,7 @@ LDFLAGS	=-x #-s
 CC	=gcc-3.4
 CFLAGS	=-g -m32 -Wall -O -fstrength-reduce -fomit-frame-pointer \
 	-finline-functions -nostdinc -I../include # -fcombine-regs -mstring-insns
-CPP	=gcc-3.4 -E -nostdinc -I../include
+CPP	=cpp -E -nostdinc -I../include
 
 .c.s:
 	$(CC) $(CFLAGS) \

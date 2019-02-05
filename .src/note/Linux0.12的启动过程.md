@@ -1,6 +1,6 @@
 # Linux0.12的启动过程
 
-![Linux0.12的启动过程.png](.src/pic/Linux0.12的启动过程.png)
+![Linux0.12的启动过程.png](.pic/Linux0.12的启动过程.png)
 
 ## 一、BIOS
 &emsp;计算机上电就会去加载运行BIOS。BIOS是"Basic Input Output System"的缩写，即"基本输入输出系统"。BIOS会先运行**POST自检程序**(Power On Self Test，上电自检)，检查计算机的各种硬件。如果硬件出现问题，将给出各种提示信息，例如蜂鸣。并会在内存的物理地址0处开始**初始化中断向量**。
@@ -21,4 +21,4 @@
 
 5. 进入32位保护模式，跳转到system模块最前面的head中运行。
 
-![bootsect_and_setup.png](.src/pic/bootsect_and_setup.png)
+![bootsect_and_setup.png](.pic/bootsect_and_setup.png)

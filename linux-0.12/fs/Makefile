@@ -4,7 +4,7 @@ CC	=gcc-3.4
 LD	=ld -m elf_i386  # 64位系统下链接，需要开启 -m elf_i386
 CFLAGS	=-g -m32 -Wall -O -fstrength-reduce  -fomit-frame-pointer \
  -fno-defer-pop -nostdinc -I../include # -fcombine-regs -mstring-insns
-CPP	=gcc-3.4 -E -nostdinc -I../include
+CPP	=cpp -E -nostdinc -I../include
 
 .c.s:
 	$(CC) $(CFLAGS) \

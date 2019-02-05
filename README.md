@@ -10,9 +10,12 @@
 | `oslab`      | 实验目录              |
 | `.src`       | 一些资源和笔记         |
 
-## 实验篇
+## 一、实验篇
 
-### 一、环境搭建
+### 环境搭建
+
+- 编译环境要求: gcc-3.4
+- 运行环境: bochs模拟器
 
 #### ubuntu(64bit>=14.04)
 
@@ -22,7 +25,7 @@ ubuntu用户可以使用`.src/setup`目录下的一键搭建脚本[setup.sh](.sr
 
 - `-e` &emsp;安装编译环境(gcc-3.4，bin86等)
 - `-b` &emsp;安装bochs模拟器
-- `-bm` &emsp;下载和编译bochs源码，生成bochs模拟器(建议bochs安装采用这种方式)
+- `-bm` &emsp;下载和编译bochs源码，生成bochs模拟器(一般用不到)
     
     - `-g` &emsp;编译生成带gdb调试的bochs模拟器，例： ```./setup.sh -bm -g```
 
@@ -52,7 +55,17 @@ ubuntu用户可以使用`.src/setup`目录下的一键搭建脚本[setup.sh](.sr
 
     ![docker](.src/pic/docker.png)
 
-## 踩坑篇
+
+### 实验环境说明
+
+该项目的oslab为实验目录， 运行该目录下的`run.sh`脚本即可运行实验环境。
+
+选项：
+
+- `-m` &emsp;编译生成新的Image镜像
+- `-g` &emsp;运行bochs模拟器，与gdb联调
+
+## 二、踩坑篇
 
 1. [常见编译问题总结](.src/note/编译源码的问题记录.md) &emsp;如需对从oldlinux下载的linux-0.1x的代码进行修改，可参考。
 

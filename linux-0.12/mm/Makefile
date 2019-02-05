@@ -4,7 +4,7 @@ CFLAGS	=-g -m32 -O -Wall -fstrength-reduce -fomit-frame-pointer \
 AS	=as --32
 AR	=ar
 LD	=ld -m elf_i386 # 64位系统下链接，需要开启 -m elf_i386
-CPP	=gcc-3.4 -E -nostdinc -I../include
+CPP	=cpp -E -nostdinc -I../include
 
 .c.o:
 	$(CC) $(CFLAGS) \

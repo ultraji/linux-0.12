@@ -32,7 +32,7 @@ CFLAGS	=-m32 -g -Wall -O -fstrength-reduce -fomit-frame-pointer # 64位系统下
 
 # -nostdinc: 不要去搜索标准头文件目录，即不使用标准头文件
 # -Iinclude: 通过-I指定在该项目的include文件夹中搜索
-CPP	=cpp-3.4 -nostdinc -Iinclude
+CPP	=cpp -nostdinc -Iinclude
 
 #
 # ROOT_DEV specifies the default root-device when making the image.

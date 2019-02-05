@@ -23,7 +23,7 @@ ubuntu用户可以使用`.src/setup`目录下的一键搭建脚本[setup.sh](.sr
 - 不带参数 &emsp;安装编译环境以及bochs模拟器
 - `-e` &emsp;安装编译环境(gcc-3.4，bin86等)
 - `-b` &emsp;安装bochs模拟器
-- `-bm` 下载和编译bochs源码，生成bochs模拟器(一般用不到)
+- `-bm` &emsp;下载和编译bochs源码，生成bochs模拟器(一般用不到)
 
 #### 其他系统(ubuntu也适用)
 

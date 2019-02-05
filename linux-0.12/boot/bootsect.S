@@ -70,6 +70,7 @@ ENDSEG   = SYSSEG + SYSSIZE		! where to stop loading
 
 ! ROOT_DEV & SWAP_DEV are now written by "build".
 ; 根文件系统设备号 ROOT_DEV 和 交换设备号 SWAP_DEV 现在由 tools 目录下的 build 程序写入。
+
 ; 设备号具体值的含义如下：
 ; 设备号=主设备号*256 + 次设备号（也即 dev_no = ( major <<8 ) + minor ）
 ; （主设备号：1-内存,2-磁盘,3-硬盘,4-ttyx,5-tty,6-并行口,7-非命名管道）
@@ -81,14 +82,14 @@ ENDSEG   = SYSSEG + SYSSIZE		! where to stop loading
 ; 0x306 - /dev/hd6 - 第 2 个盘的第 1 个分区；
 ; …
 ; 0x309 - /dev/hd9 - 第 2 个盘的第 4 个分区；
-; 从 Linux 内核 0.95 版后已经使用与现在相同的命名方法了。
+; 从Linux内核0.95版后已经使用与现在相同的命名方法了。
 
 ROOT_DEV = 0	; 根文件系统设备使用与系统引导时同样的设备。
 SWAP_DEV = 0	; 交换设备使用与引导时同样的设备。
 
-entry start 	; 告知链接程序，程序从 start 标号处开始执行。
+entry start 	; 告知链接程序，程序从start标号处开始执行。
 start:
-	; 将自身(bootsect)从当前段位置(即 0x7c00 )移动到 0x90000 处，共512个字节。
+	; 将自身(bootsect)从当前段位置(即 0x7c00 )移动到 0x90000 处，共256字(512字节)。
 	mov	ax,#BOOTSEG
 	mov	ds,ax
 	mov	ax,#INITSEG
@@ -108,6 +109,7 @@ start:
 ; 这里的 push ax 的作用是想暂时把段值保留在栈中，然后等下面执行完判断磁道扇区数后再弹出栈，并
 ; 给 fs 和 gs 赋值，但接下来的2个指令改变了栈段位置,所以需要先恢复到原来的栈段，再执行弹出栈
 ; 操作。这更像是一个bug，改正： 去掉 push ax，把之后的 pop ax 改成 mov ax,cs 。
+; TODO: 不改也没问题
 
 go:	mov	ax,cs		
 	mov	dx,#0xfef4	! arbitrary value >>512 - disk parm size
@@ -116,12 +118,12 @@ go:	mov	ax,cs
 					; 这里 sp 被设置成了 0x9ff00 - 12(参数表长度)，即 sp = 0xfef4。
 	mov	ds,ax
 	mov	es,ax
-	push   ax		! 临时保存段值(0x9000)，供后面使用。
+	;push   ax		; 临时保存段值(0x9000)，供后面使用。
 
 	mov	ss,ax		! put stack at 0x9ff00 - 12.
 	mov	sp,dx
 /*
- *	Many BIOS's default disk parameter tables will not 				'
+ *	Many BIOS's default disk parameter tables will not 				
  *	recognize multi-sector reads beyond the maximum sector number
  *	specified in the default diskette parameter tables - this may
  *	mean 7 sectors in some cases.
@@ -179,7 +181,7 @@ go:	mov	ax,cs
 	seg fs
 	mov	2(bx),es
 
-	pop ax; mov ax,cs ; 	! ax = 0x9000
+	mov ax,cs ; pop ax	! ax = 0x9000
 	mov	fs,ax
 	mov	gs,ax
 	
@@ -242,7 +244,9 @@ ok_load_setup:
 
 ! Print some inane message
 ; 在显示一些信息('Loading' + 回车 + 换行，共 9 个字符)。
-
+; BIOS中断0x10功能号 ah = 0x03,读光标位置.
+; 输入:bh = 页号
+; 返回: ch = 扫描开始线; cl = 扫描结束线; dh = 行号(0x00 顶端); dl = 列号(0x00 最左边).
 	mov	ah,#0x03		! read cursor pos 	; 读光标位置
 	xor	bh,bh			; bh 页号
 	int	0x10
@@ -306,6 +310,11 @@ root_defined:			; 将检查过的设备号保存到 root_dev 中。
 
 ;;;;;;;; bootsect.S 程序到此就结束了。
 
+; 下面是几个子程序: 
+; read_it 用于读取磁盘上的system模块
+; kill_motor 用于关闭软驱电动机
+; 还有一些屏幕显示子程序
+
 ! This routine loads the system at address 0x10000, making sure
 ! no 64kB boundaries are crossed. We try to load it as fast as
 ! possible, loading whole tracks whenever we can.
@@ -321,13 +330,16 @@ head:	.word 0				! current head ;当前磁头号
 track:	.word 0				! current track ;当前磁道号
 
 read_it:
-; 首先测试输入的段值。必须位于内存地址64KB 边界处，否则进入死循环。清bx 寄存器，用于表示当前段内
+
+; 首先测试输入的段值。必须位于内存地址64KB 边界处，否则进入死循环。清bx寄存器，用于表示当前段内
 ; 存放数据的开始位置。
+; 指令test以位逻辑与两个操作数.若两个操作数对应的位都为1,则结果值的对应位为1,否则为0.该操作结果只影响标志(零标志ZF等).例如若AX=0x1000,那么
+; test指令的执行结果是(0x1000 & 0x0fff) = 0x0000,于是ZF标志置位.此时即下一条指令jne条件不成立.
 	mov ax,es
 	test ax,#0x0fff
 die:	
-	jne die			! es must be at 64kB boundary ; es 值必须位于64KB 地址边界。
-	xor bx,bx		! bx is starting address within segment ; bx 为段内偏移位置。
+	jne die			! es must be at 64kB boundary ; es值必须位于64KB地址边界。
+	xor bx,bx		! bx is starting address within segment ; bx为段内偏移位置。
 rp_read:
 	mov ax,es
 	cmp ax,#ENDSEG		! have we loaded all yet? ; 是否已经加载了全部数据？
@@ -398,7 +410,7 @@ read_track:
 	inc cx
 	mov ch,dl 		; ch - 磁道号 ，cl - 开始读的扇区
 	mov dx,head 	; 取当前磁头号
-	mov dh,dl 		; dh = 磁头号，dl = 驱动器号( 0 代表 A驱)。
+	mov dh,dl 		; dh = 磁头号，dl = 驱动器号(0代表A驱)。
 	and dx,#0x0100 	; 磁头号不大于1.
 	mov ah,#2
 	
@@ -424,7 +436,7 @@ bad_rt:
 	int 0x13
 	
 
-	add	sp, #10				; 丢弃为出错情况保存的信息 ax + ax,bx,cx,dx
+	add	sp, #10				; 丢弃为出错情况保存的信息 ax,ax,bx,cx,dx
 	popa	
 	jmp read_track
 
@@ -443,14 +455,16 @@ bad_rt:
 ; print_all 用于调试目的，前提是从一个子程序中调用。栈帧结构如上所示
 print_all:
 	mov	cx, #5			! error code + 4 registers
-	mov	bp, sp	
+	mov	bp, sp			; 保存当前栈指针sp.
 
 print_loop:
-	push	cx			! save count left
+	push	cx			! save count left ; 保存需要显示的剩余个数.
 	call	print_nl	! nl for readability
 	jae		no_reg		! see if register name is needed
+						; 若FLAGS的标志CF=0则不显示寄存器名,于是跳转.
 	
-	mov	ax, #0xe05 + 0x41 - 1
+	; 下面几行用于显示寄存器号,例如："AX:", 0x45 - E
+	mov	ax, #0xe05 + 0x41 - 1 ; ah = 功能号(0x0e); al = 字符(0x05 + 0x41 -1).
 	sub	al, cl
 	int	0x10
 
@@ -479,12 +493,19 @@ print_nl:
  *	print_hex is for debugging purposes, and prints the word
  *	pointed to by ss:bp in hexadecmial.
 */
-
+/*
+ *
+ *	子程序print_hex用于调试目的.它使用十六进制在屏幕上显示出ss:bp指向的字.
+ *
+ */
+; 调用BIOS中断0x10,以电传方式和4个十六进制数显示ss:bp指向的字.
 print_hex:
 	mov	cx, #4		! 4 hex digits
 	mov	dx, (bp)	! load word into dx
+
+; 先显示高字节,因此需要把dx中值左旋4位,此时高4位在dx的低4位中.
 print_digit:
-	rol	dx, #4		! rotate so that lowest 4 bits are used 左旋4位
+	rol	dx, #4		! rotate so that lowest 4 bits are used ;左旋4位
 	mov	ah, #0xe	
 	mov	al, dl		! mask off so we have only next nibble
 	and	al, #0xf 	; 只取低四位显示
@@ -522,13 +543,13 @@ msg1:
 
 .org 506
 ; 表示下面语句从地址506(0x1FC)开始，所以swap_dev在启动扇区的第506开
-; 始的2个字节中，root_dev在启动扇区的第508 开始的2个字节中。
+; 始的2个字节中，root_dev在启动扇区的第508开始的2个字节中。
 swap_dev:
 	.word SWAP_DEV
 root_dev:
 	.word ROOT_DEV
 
-; 下面是启动盘具有有效引导扇区的标志。
+; 下面是启动盘具有有效引导扇区的标志。仅供BIOS中的程序加载引导扇区时识别使用.它必须位于引导扇区的最后两个字节中。
 boot_flag:
 	.word 0xAA55
 

@@ -9,9 +9,9 @@
 AR	=ar
 AS	=as --32
 LD	=ld
-LDFLAGS	=-s -x
+LDFLAGS	=-x #-s
 CC	=gcc-3.4
-CFLAGS	=-m32 -Wall -O -fstrength-reduce -fomit-frame-pointer \
+CFLAGS	=-g -m32 -Wall -O -fstrength-reduce -fomit-frame-pointer \
 	-finline-functions -nostdinc -I../include # -fcombine-regs -mstring-insns
 CPP	=gcc-3.4 -E -nostdinc -I../include
 

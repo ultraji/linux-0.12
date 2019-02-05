@@ -18,7 +18,7 @@ LD	=ld
 # -x: 删除所有局部符号
 # -e startup_32(新增): 指定入口
 # -Ttext 0(新增): 使`startup_32`标号对应的地址为`0x0`
-LDFLAGS	=-m elf_i386 -s -x -Ttext 0 -e startup_32 # 64位系统下链接需要加 -m elf_i386
+LDFLAGS	=-m elf_i386 -x -Ttext 0 -e startup_32 # -s # 64位系统下链接需要加 -m elf_i386
 
 CC	=gcc-3.4 $(RAMDISK)
 
@@ -28,7 +28,7 @@ CC	=gcc-3.4 $(RAMDISK)
 # -fomit-frame-pointer: 对无需帧指针的函数不要把帧指针保留在寄存器中
 # -fcombine-regs(去除): 不再被gcc支持
 # -mstring-insns(去除): Linus本人增加的选项(gcc中没有)
-CFLAGS	=-m32 -Wall -O -fstrength-reduce -fomit-frame-pointer # 64位系统下需要加 -m32
+CFLAGS	=-m32 -g -Wall -O -fstrength-reduce -fomit-frame-pointer # 64位系统下需要加 -m32
 
 # -nostdinc: 不要去搜索标准头文件目录，即不使用标准头文件
 # -Iinclude: 通过-I指定在该项目的include文件夹中搜索

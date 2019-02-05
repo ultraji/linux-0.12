@@ -9,9 +9,9 @@
 AR	=ar
 AS	=as --32
 LD	=ld -m elf_i386  # 64位系统下链接，需要开启 -m elf_i386
-LDFLAGS	=-s -x
+LDFLAGS	=-x #-s
 CC	=gcc-3.4
-CFLAGS	=-m32 -Wall -O -fstrength-reduce -fomit-frame-pointer\
+CFLAGS	=-g -m32 -Wall -O -fstrength-reduce -fomit-frame-pointer\
 	-finline-functions -nostdinc -I../include # -mstring-insns -fcombine-regs
 CPP	=gcc-3.4 -E -nostdinc -I../include
 

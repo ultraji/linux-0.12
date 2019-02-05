@@ -20,7 +20,7 @@ bochs_make_install(){
         libxinerama-dev libxi-dev &> /dev/null
 
     # libgtk2.0-dev 因为依赖问题安装失败的解决方案
-    # dpkg -l |grep libgtk2.0-dev &> /dev/null || (sudo apt-get install aptitude && sudo aptitude install libgtk2.0-dev)
+    # sudo apt-get install aptitude && sudo aptitude install libgtk2.0-dev
 
     if [ ! -e "bochs-2.6.9.tar.gz" ]; then
         wget https://downloads.sourceforge.net/project/bochs/bochs/2.6.9/bochs-2.6.9.tar.gz -q --show-progress  && \
@@ -32,8 +32,14 @@ bochs_make_install(){
 
     if [ -d "bochs-2.6.9" ];then
         cd bochs-2.6.9
-        ./configure --enable-debugger --enable-disasm && \
-        make
+        if [ "$1" ] && [ "$1" = "-g" ]
+        then
+            ./configure --enable-gdb-stub --enable-disasm
+        else
+            ./configure --enable-debugger --enable-disasm
+        fi
+        make && \
+        sudo make install
     fi
 
 }
@@ -93,11 +99,8 @@ then
     bochs_install
 elif [ "$1" ] && [ "$1" = "-bm" ]
 then
-    bochs_make_install
+    bochs_make_install $2
 elif [ "$1" ] && [ "$1" = "-e" ]
 then
     env_install
-else
-    env_install
-    bochs_install
 fi

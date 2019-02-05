@@ -1,5 +1,5 @@
 CC	=gcc-3.4
-CFLAGS	=-m32 -O -Wall -fstrength-reduce -fomit-frame-pointer \
+CFLAGS	=-g -m32 -O -Wall -fstrength-reduce -fomit-frame-pointer \
 	-finline-functions -nostdinc -I../include # -fcombine-regs
 AS	=as --32
 AR	=ar

@@ -6,13 +6,4 @@ ata0-master: type=disk, path="$OSLAB_PATH/hdc.img", mode=flat, cylinders=204, he
 boot: floppy
 log: $OSLAB_PATH/bochsout.txt
 #parport1: enable=0
-vga_update_interval: 300000
-keyboard_serial_delay: 200
-keyboard_paste_delay: 100000
-#floppy_command_delay: 50000
 cpu: count=1, ips=4000000
-mouse: enabled=0
-private_colormap: enabled=0
-fullscreen: enabled=0
-screenmode: name="sample"
-i440fxsupport: enabled=0

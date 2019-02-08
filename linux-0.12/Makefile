@@ -16,9 +16,10 @@ LD	=ld
 
 # -s: 输出文件中省略所有的符号信息
 # -x: 删除所有局部符号
+# -M: 用于输出符号表
 # -e startup_32(新增): 指定入口
 # -Ttext 0(新增): 使`startup_32`标号对应的地址为`0x0`
-LDFLAGS	=-m elf_i386 -x -Ttext 0 -e startup_32 # -s # 64位系统下链接需要加 -m elf_i386
+LDFLAGS	=-m elf_i386 -M -x -Ttext 0 -e startup_32 # -s # 64位系统下链接需要加 -m elf_i386
 
 CC	=gcc-3.4 $(RAMDISK)
 

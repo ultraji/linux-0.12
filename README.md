@@ -67,12 +67,16 @@ ubuntu用户可以使用`.src/setup`目录下的一键搭建脚本[setup.sh](.sr
 
 ## 二、踩坑篇
 
+如有错误、疏漏之处，感谢指出。笔记部分，使用、转载请注明出处。
+
 1. [常见编译问题总结](.src/note/编译源码的问题记录.md) &emsp;如需对从oldlinux下载的linux-0.1x的代码进行修改，可参考。
 
 2. [源码文件目录说明](.src/note/源码文件目录说明.md)
 
 3. [Bochs调试技巧](.src/note/Bochs调试技巧.md)
 
-4. [汇编中各寄存器的作用](.src/note/汇编中各寄存器的作用.md) &emsp;看`*.s`内容前，可以看一下
+4. [gdb调试技巧](.src/note/gdb调试技巧.md)
 
-5. [Linux0.12的启动过程](.src/note/Linux0.12的启动过程.md)
+5. [汇编中各寄存器的作用](.src/note/汇编中各寄存器的作用.md) &emsp;看`*.s`内容前，可以看一下
+
+6. [Linux0.12的启动过程](.src/note/Linux0.12的启动过程.md)

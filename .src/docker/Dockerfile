@@ -42,11 +42,11 @@ RUN apt-get update && apt-get install -y \
     build-essential bochs bochs-x bochs-sdl \
     make bin86 gcc-multilib
 
-RUN wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/gcc-3.4-base_3.4.6-6ubuntu3_amd64.deb && dpkg -i gcc-3.4-base_3.4.6-6ubuntu3_amd64.deb || echo
-RUN wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/gcc-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i gcc-3.4_3.4.6-6ubuntu3_amd64.deb || echo
-RUN wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/cpp-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i cpp-3.4_3.4.6-6ubuntu3_amd64.deb || echo
-RUN wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/g++-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i g++-3.4_3.4.6-6ubuntu3_amd64.deb || echo
-RUN wget http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/libstdc++6-dev_3.4.6-6ubuntu3_amd64.deb && dpkg -i libstdc++6-dev_3.4.6-6ubuntu3_amd64.deb || echo
+RUN wget -q --show-progress http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/gcc-3.4-base_3.4.6-6ubuntu3_amd64.deb && dpkg -i gcc-3.4-base_3.4.6-6ubuntu3_amd64.deb || echo
+RUN wget -q --show-progress http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/gcc-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i gcc-3.4_3.4.6-6ubuntu3_amd64.deb || echo
+RUN wget -q --show-progress http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/cpp-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i cpp-3.4_3.4.6-6ubuntu3_amd64.deb || echo
+RUN wget -q --show-progress http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/g++-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i g++-3.4_3.4.6-6ubuntu3_amd64.deb || echo
+RUN wget -q --show-progress http://old-releases.ubuntu.com/ubuntu/pool/universe/g/gcc-3.4/libstdc++6-dev_3.4.6-6ubuntu3_amd64.deb && dpkg -i libstdc++6-dev_3.4.6-6ubuntu3_amd64.deb || echo
 RUN apt-get install -y -f && rm *.deb
 
 ADD ./vnc_startup.sh ${HOME}

@@ -22,32 +22,35 @@
  */
 
 /*
- * 我们需要下面这些内嵌语句 - 从内核空间创建进程将导致没有写时复制(COPY ON WRITE)!!!直到执行一
- * 个execve调用。这对堆栈可能带来问题。处理方法是在fork()调用后不让main()使用任何堆栈。因此就不
- * 能有函数调用 - 这意味着fork也要使用内嵌代码，否则我们在从fork()退出时就要使用堆栈了。
+ * 我们需要下面这些内嵌语句 - 从内核空间创建进程将导致没有写时复制 (COPY ON WRITE)!!!
+ * 直到执行一个 execve 调用。这对堆栈可能带来问题。处理方法是在 fork() 调用后不让
+ *  main() 使用任何堆栈。因此就不能有函数调用 - 这意味着fork也要使用内嵌代码，否则
+ * 我们在从 fork() 退出时就要使用堆栈了。
  *
- * 实际上只有pause和fork需要使用内嵌方式，以保证从main()中不会弄乱堆栈，但是我们同时还定义了其他
- * 一些函数。
+ * 实际上只有 pause 和 fork 需要使用内嵌方式，以保证从 main() 中不会弄乱堆栈，但是我们
+ * 同时还定义了其他一些函数。
  */
-// Linux在内核空间创建进程时不使用写时复制技术(Copy on write)。main()在移动到用户模式（到任务0）
-// 后执行内嵌方式的fork()和pause()，因此可保证不使用任务0的用户栈。在执行move_to_user_mode()之
-// 后，本程序main()就以任务0的身份在运行了。而任务0是所有将创建子进程的父进程。当字创建一个子进程时
-//（init进程），由于任务1代码属于内核空间，因此没有使用写时复制功能。此时任务0的用户栈就是任务1的用户
-// 栈，即它们共同使用一个栈空间。因此希望在main.c运行在任务0的环境下时不要有对堆栈的任何操作，以免弄乱
-// 堆栈。而在再次执行fork()并执行过execve()函数后，被加载程序已不属于内核空间，因此可以使用写时复制
-// 技术了。
-// 下面的_syscall0()是unistd.h中的内嵌宏代码。以嵌入汇编的形式调用Linux的系统调用中断0x80。该中断
-// 是所有系统调用的入口.该条语句实际上是int fork()创建进程系统调用.可展开看之就会立刻明白。
-// syscall0名称中最后的0表示无参数,1表示1个参数。
 
-// int fork()系统调用函数的定义
-static inline _syscall0(int,fork)
-// int pause()系统调用：暂停进程的执行，直到收到一个信号。
-static inline _syscall0(int,pause)
-// int setup(void * BIOS)系统调用,仅用于linux初始化(仅在这个程序中被调用).
-static inline _syscall1(int,setup,void *,BIOS)
-// int sync()系统调用：更新文件系统。
-static inline _syscall0(int,sync)
+// Linux 在内核空间创建进程时不使用写时复制技术 (Copy on write)。main() 在移动到用户模
+// 式(到任务0)后执行内嵌方式的 fork() 和 pause()，因此可保证不使用任务0的用户栈。在执
+// 行 move_to_user_mode() 之后，本程序 main() 就以任务0的身份在运行了。而任务0是所有将
+// 创建子进程的父进程。当字创建一个子进程时(init进程)，由于任务1代码属于内核空间，因此没
+// 有使用写时复制功能。此时任务0的用户栈就是任务1的用户栈，即它们共同使用一个栈空间。因此
+// 希望在 main.c 运行在任务0的环境下时不要有对堆栈的任何操作，以免弄乱堆栈。而在再次执行
+// fork() 并执行过 execve() 函数后，被加载程序已不属于内核空间，因此可以使用写时复制技
+// 术了。
+// 下面的 _syscall0() 是 unistd.h 中的内嵌宏代码。以嵌入汇编的形式调用 Linux 的系统调用
+// 中断 0x80。该中断是所有系统调用的入口。该条语句实际上是 int fork() 创建进程系统调用。
+// 可展开看之就会立刻明白。syscall0 名称中最后的0表示无参数，1 表示1个参数。
+
+// int fork() 				系统调用：创建进程
+static inline _syscall0(int, fork)
+// int pause() 				系统调用：暂停进程的执行，直到收到一个信号
+static inline _syscall0(int, pause)
+// int setup(void * BIOS) 	系统调用：仅用于 linux 初始化(仅在这个程序中被调用)
+static inline _syscall1(int, setup, void *, BIOS)
+// int sync() 				系统调用：更新文件系统
+static inline _syscall0(int, sync)
 
 #include <linux/tty.h>
 #include <linux/sched.h>
@@ -65,18 +68,18 @@ static inline _syscall0(int,sync)
 
 #include <string.h>
 
-static char printbuf[1024];					/* 静态字符串数组，用作内核显示信息的缓存。*/
+static char printbuf[1024];						/* 静态字符串数组，用作内核显示信息的缓存。*/
 
 extern char *strcpy();
 extern int vsprintf();
-extern void init(void);						/* 函数原型，初始化 */
-extern void blk_dev_init(void);				/* 块设备初始化子 blk_drv/ll_re_blk.c */
-extern void chr_dev_init(void);				/* 字符设备初始化 chr_drv/tty_io.c */
-extern void hd_init(void);					/* 硬盘初始化 blk_drv/hd.c */
-extern void floppy_init(void);				/* 软驱初始化 blk_drv/floppy.c */
-extern void mem_init(long start, long end);			/* 内存管理初始化 mm/memory.c */
-extern long rd_init(long mem_start, int length);	/* 虚拟盘初始化 blk_drv/ramdisk.c */
-extern long kernel_mktime(struct tm * tm);	/* 计算系统开机启动时间(秒) */
+extern void init(void);							/* 函数原型，初始化 */
+extern void blk_dev_init(void);					/* 块设备初始化子 blk_drv/ll_re_blk.c */
+extern void chr_dev_init(void);					/* 字符设备初始化 chr_drv/tty_io.c */
+extern void hd_init(void);						/* 硬盘初始化 blk_drv/hd.c */
+extern void floppy_init(void);					/* 软驱初始化 blk_drv/floppy.c */
+extern void mem_init(long start, long end);		/* 内存管理初始化 mm/memory.c */
+extern long rd_init(long mem_start, int length);/* 虚拟盘初始化 blk_drv/ramdisk.c */
+extern long kernel_mktime(struct tm * tm);		/* 计算系统开机启动时间(秒) */
 
 // 内核专用sprintf()函数。产生格式化信息并输出到指定缓冲区str中。
 static int sprintf(char * str, const char *fmt, ...)
@@ -110,9 +113,9 @@ static int sprintf(char * str, const char *fmt, ...)
  * bios-listing reading. Urghh.
  */
 // 这段宏读取CMOS实时时钟数据。outb_p和inb_p是include/asm/io.h中定义的端口输入输出宏。
-#define CMOS_READ(addr) ({ \
-	outb_p(0x80|addr,0x70); \
-	inb_p(0x71); \
+#define CMOS_READ(addr) ({ 		\
+	outb_p(0x80 | addr, 0x70); 	\
+	inb_p(0x71); 				\
 })
 
 // 将BCD码转换成二进制数值。
@@ -129,7 +132,7 @@ static void time_init(void)
 		time.tm_min = CMOS_READ(2);
 		time.tm_hour = CMOS_READ(4);
 		time.tm_mday = CMOS_READ(7);
-		time.tm_mon = CMOS_READ(8);
+		time.tm_mon = CMOS_READ(8);			/* 当前月份(1~12) */
 		time.tm_year = CMOS_READ(9);
 	} while (time.tm_sec != CMOS_READ(0));
 	BCD_TO_BIN(time.tm_sec);
@@ -159,22 +162,11 @@ static char * envp[] = { "HOME=/usr/root", NULL, NULL };
 // 用于存放硬盘参数表
 struct drive_info { char dummy[32]; } drive_info;
 
-static inline long fork_for_process0() {
-	long __res;
-	__asm__ volatile (
-		"int $0x80\n\t"  				/* 调用系统中断0x80 */
-		: "=a" (__res)  				/* 返回值->eax(__res) */
-		: "0" (2));  					/* 输入为系统中断调用号__NR_name */
-	if (__res >= 0)  					/* 如果返回值>=0,则直接返回该值 */
-		return __res;
-	errno = -__res;  					/* 否则置出错号,并返回-1 */
-	return -1;
-}
-
 // 内核初始化主程序。
-// 这里真的是void，因为在head.s就是这么假设的(把main的地址压入堆栈的时候)。
 void main(void)		/* This really IS void, no error here. */
+					/* 这里真的是 void，没有问题 */
 {					/* The startup routine assumes (well, ...) this */
+					/* 因为在 head.s 就是这么假设的(把 main 的地址压入堆栈的时候) */
 /*
  * Interrupts are still disabled. Do necessary setups, then
  * enable them
@@ -191,25 +183,27 @@ void main(void)		/* This really IS void, no error here. */
 
 	// 接着根据机器物理内存容量设置高速缓冲区和主内存区的位置和范围。
 	// 高速缓冲末端地址 > buffer_memory_end
-	// 机器内存容量 > memory_end
-	// 主内存开始地址 > main_memory_start
+	// 机器内存容量 	> memory_end
+	// 主内存开始地址 	> main_memory_start
 	memory_end = (1<<20) + (EXT_MEM_K<<10); 	/* 1M + 扩展内存大小 */
 	memory_end &= 0xfffff000;					/* 忽略不到4K(1页)的内存数 */
 	if (memory_end > 16*1024*1024)
 		memory_end = 16*1024*1024;
+
 	if (memory_end > 12*1024*1024)
 		buffer_memory_end = 4*1024*1024;
 	else if (memory_end > 6*1024*1024)
 		buffer_memory_end = 2*1024*1024;
 	else
 		buffer_memory_end = 1*1024*1024;
-	main_memory_start = buffer_memory_end;	/* 主内存开始地址 = 高速缓冲区结束地址 */
+
+	main_memory_start = buffer_memory_end;		/* 主内存开始地址 = 高速缓冲区结束地址 */
 #ifdef RAMDISK	/* 如果定义了虚拟盘，则主内存还得相应减少 */
 	main_memory_start += rd_init(main_memory_start, RAMDISK*1024);
 #endif
 
 // 以下是内核进行所有方面的初始化工程。
-	mem_init(main_memory_start,memory_end);	/* 主内存区初始化 */
+	mem_init(main_memory_start, memory_end);/* 主内存区初始化 */
 	trap_init();							/* 陷阱门初始化 */
 	blk_dev_init();							/* 块设备初始化 */
 	chr_dev_init();							/* 字符设备初始化 */
@@ -222,7 +216,7 @@ void main(void)		/* This really IS void, no error here. */
 	sti();									/* 开启中断 */
 // 下面过程通过在堆栈中设置的参数，利用中断返回指令启动任务0执行。
 	move_to_user_mode();
-	if (!fork_for_process0()) {							/* we count on this going ok */
+	if (!fork()) {							/* we count on this going ok */
 		init();
 	}
 /*

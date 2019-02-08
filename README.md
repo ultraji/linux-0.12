@@ -41,10 +41,10 @@ ubuntu用户可以使用`.src/setup`目录下的一键搭建脚本[setup.sh](.sr
     docker pull ultraji/ubuntu-xfce-novnc:os_learn 
     ```
 
-2. 运行容器, 例如将本地项目目录C盘下`linux-0.12`挂载到ubuntu用户的桌面下; 
+2. 运行容器, 例如将本地项目`home`目录下`linux-0.12`挂载到ubuntu用户的桌面下(不建议在windows挂载，windows不区分文件大小写); 
 
     ```shell
-    docker run -t -i -p 6080:6080 -v /c/linux-0.12:/home/ubuntu/Desktop/linux-0.12 ultraji/ubuntu-xfce-novnc:os_learn
+    docker run -t -i -p 6080:6080 -v /home/ultraji/linux-0.12:/home/ubuntu/Desktop/linux-0.12 ultraji/ubuntu-xfce-novnc:os_learn
     ```
 
 3. 默认不启动VNC服务, 运行`home/ubuntu`目录下`vnc_startup.sh`脚本启动VNC服务。开启vncserver后就可以通过浏览器输入```http://localhost:6080/vnc.html```访问桌面系统了。

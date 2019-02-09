@@ -16,4 +16,6 @@
 
     `set follow-fork-mode parent` 设置跟踪父进程。
 
-8. `q` 退出
+8. `print x=val` 修改变量值
+
+9. `q` 退出

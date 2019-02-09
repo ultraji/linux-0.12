@@ -34,7 +34,7 @@
 // Linux 在内核空间创建进程时不使用写时复制技术 (Copy on write)。main() 在移动到用户模
 // 式(到任务0)后执行内嵌方式的 fork() 和 pause()，因此可保证不使用任务0的用户栈。在执
 // 行 move_to_user_mode() 之后，本程序 main() 就以任务0的身份在运行了。而任务0是所有将
-// 创建子进程的父进程。当字创建一个子进程时(init进程)，由于任务1代码属于内核空间，因此没
+// 创建子进程的父进程。当它创建一个子进程时(init进程)，由于任务1代码属于内核空间，因此没
 // 有使用写时复制功能。此时任务0的用户栈就是任务1的用户栈，即它们共同使用一个栈空间。因此
 // 希望在 main.c 运行在任务0的环境下时不要有对堆栈的任何操作，以免弄乱堆栈。而在再次执行
 // fork() 并执行过 execve() 函数后，被加载程序已不属于内核空间，因此可以使用写时复制技
@@ -132,7 +132,7 @@ static void time_init(void)
 		time.tm_min = CMOS_READ(2);
 		time.tm_hour = CMOS_READ(4);
 		time.tm_mday = CMOS_READ(7);
-		time.tm_mon = CMOS_READ(8);			/* 当前月份(1~12) */
+		time.tm_mon = CMOS_READ(8);		/* 当前月份(1~12) */
 		time.tm_year = CMOS_READ(9);
 	} while (time.tm_sec != CMOS_READ(0));
 	BCD_TO_BIN(time.tm_sec);
@@ -141,8 +141,8 @@ static void time_init(void)
 	BCD_TO_BIN(time.tm_mday);
 	BCD_TO_BIN(time.tm_mon);
 	BCD_TO_BIN(time.tm_year);
-	time.tm_mon--;							/* ti_mon中的月份范围是 0 ~ 11 */
-	startup_time = kernel_mktime(&time);	/* 计算开机时间。*/
+	time.tm_mon--;						/* ti_mon中的月份范围是 0 ~ 11 */
+	startup_time = kernel_mktime(&time);/* 计算开机时间。*/
 }
 
 static long memory_end = 0;				/* 机器所具有的物理内存容量 */
@@ -156,7 +156,7 @@ static char * envp_rc[] = { "HOME=/", NULL ,NULL };	/* 调用执行程序时的�
 
 // 运行登录shell时所使用的命令行和环境参数。
 // argv[0]中的字符“-”是传递shell程序sh的一个标示位，通过这个标示位，sh程序会作为shell程序执行。
-static char * argv[] = { "-/bin/sh",NULL };
+static char * argv[] = { "-/bin/sh", NULL };
 static char * envp[] = { "HOME=/usr/root", NULL, NULL };
 
 // 用于存放硬盘参数表

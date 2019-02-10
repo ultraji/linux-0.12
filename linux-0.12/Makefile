@@ -60,6 +60,8 @@ LIBS	=lib/lib.a
 all:	Image
 
 Image: boot/bootsect boot/setup tools/system tools/build
+	# 这样修改就可以保证开启gcc调试后，System文件不变大，build也就不会失败了。原先
+	# 代码为下面注释部分
 	cp -f tools/system system.tmp
 	strip system.tmp
 	objcopy -O binary -R .note -R .comment system.tmp tools/kernel

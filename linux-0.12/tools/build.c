@@ -288,7 +288,7 @@ int main(int argc, char ** argv)
 	// 去掉这里的原因是
 	// 1. 入口位置不应该是((long *) buf)[5]，应该为((long *) buf)[6]可以在 
 	// linux 下，通过命令 readelf -h system 和 od -w4 -N 80 -x system 对比
-	// 看到入口地址应该在第28~30个字节处。
+	// 看到入口地址应该在第28~31个字节处。
 	// 2. 去除头部的动作已经在主目录Makefile中进行了。故在这里注释掉。
 	if (read(id, buf, GCC_HEADER) != GCC_HEADER){
 		die("Unable to read header of 'system'");

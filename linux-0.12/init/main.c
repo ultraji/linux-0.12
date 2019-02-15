@@ -68,7 +68,7 @@ static inline _syscall0(int, sync)
 
 #include <string.h>
 
-static char printbuf[1024];						/* 静态字符串数组，用作内核显示信息的缓存。*/
+static char printbuf[1024];					/* 静态字符串数组，用作内核显示信息的缓存。*/
 
 extern char *strcpy();
 extern int vsprintf();
@@ -185,8 +185,8 @@ void main(void)		/* This really IS void, no error here. */
 	// 高速缓冲末端地址 > buffer_memory_end
 	// 机器内存容量 	> memory_end
 	// 主内存开始地址 	> main_memory_start
-	memory_end = (1<<20) + (EXT_MEM_K<<10); 	/* 1M + 扩展内存大小 */
-	memory_end &= 0xfffff000;					/* 忽略不到4K(1页)的内存数 */
+	memory_end = (1<<20) + (EXT_MEM_K<<10); /* 1M + 扩展内存大小 */
+	memory_end &= 0xfffff000;				/* 忽略不到4K(1页)的内存数 */
 	if (memory_end > 16*1024*1024)
 		memory_end = 16*1024*1024;
 
@@ -197,7 +197,7 @@ void main(void)		/* This really IS void, no error here. */
 	else
 		buffer_memory_end = 1*1024*1024;
 
-	main_memory_start = buffer_memory_end;		/* 主内存开始地址 = 高速缓冲区结束地址 */
+	main_memory_start = buffer_memory_end;	/* 主内存开始地址 = 高速缓冲区结束地址 */
 #ifdef RAMDISK	/* 如果定义了虚拟盘，则主内存还得相应减少 */
 	main_memory_start += rd_init(main_memory_start, RAMDISK*1024);
 #endif

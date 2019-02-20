@@ -44,8 +44,8 @@ void buffer_init(long buffer_end);
 #define NR_INODE 64
 #define NR_FILE 64
 #define NR_SUPER 8
-#define NR_HASH 307
-#define NR_BUFFERS nr_buffers
+#define NR_HASH 	307					/* 缓冲区Hash表数组项数值 */
+#define NR_BUFFERS 	nr_buffers			/* 系统所含缓冲个数，初始化后不再改变 */
 #define BLOCK_SIZE 1024
 #define BLOCK_SIZE_BITS 10
 #ifndef NULL
@@ -71,18 +71,33 @@ void buffer_init(long buffer_end);
 typedef char buffer_block[BLOCK_SIZE];
 
 struct buffer_head {
-	char * b_data;			/* pointer to data block (1024 bytes) */
-	unsigned long b_blocknr;	/* block number */
-	unsigned short b_dev;		/* device (0 = free) */
-	unsigned char b_uptodate;
-	unsigned char b_dirt;		/* 0-clean,1-dirty */
-	unsigned char b_count;		/* users using this block */
-	unsigned char b_lock;		/* 0 - ok, 1 -locked */
-	struct task_struct * b_wait;
-	struct buffer_head * b_prev;
-	struct buffer_head * b_next;
-	struct buffer_head * b_prev_free;
-	struct buffer_head * b_next_free;
+	char * b_data;						/* pointer to data block (1024 bytes) */
+										/* 指向数据块的指针 */
+
+	unsigned long b_blocknr;			/* block number */
+										/* 块号 */
+
+	unsigned short b_dev;				/* device (0 = free) */
+										/* 设备号 */
+
+	unsigned char b_uptodate;			/* 更新标志：表示数据是否已更新 */
+
+	unsigned char b_dirt;				/* 0 - clean, 1 - dirty */
+										/* 0 - 未修改，1 - 已修改 */
+
+	unsigned char b_count;				/* users using this block */
+										/* 使用该块的用户数 */
+
+	unsigned char b_lock;				/* 0 - ok, 1 -locked */
+										/* 缓冲区是否被锁定 */
+	
+	struct task_struct * b_wait;		/* 指向等待该缓冲区解锁的任务 */
+
+	// 这四个指针用于缓冲区的管理
+	struct buffer_head * b_prev;		/* hash队列上前一块 */
+	struct buffer_head * b_next;		/* hash队列上后一块 */
+	struct buffer_head * b_prev_free;	/* 空闲表上前一块 */
+	struct buffer_head * b_next_free;	/* 空闲表上后一块 */
 };
 
 struct d_inode {

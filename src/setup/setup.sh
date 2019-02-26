@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 _echo_info(){
     echo -e "[Info]: ${1}"

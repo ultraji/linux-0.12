@@ -14,5 +14,5 @@ linux-0.12/tools/kernel
 oslab/bochsout.txt
 oslab/Image
 
-.src/setup/bochs-2.6.9/*
-.src/setup/bochs-2.6.9.tar.gz
+src/setup/bochs-2.6.9/*
+src/setup/bochs-2.6.9.tar.gz

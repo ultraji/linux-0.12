@@ -24,8 +24,7 @@
  * 7 - unnamed pipes
  */
 /*
- * 系统所含的设备如下：(与minix系统的一样，所以我们可以使用minix的文件系统。
- * 以下这些是主设备号。)
+ * 系统所含的设备如下：(与minix系统的一样，所以我们可以使用minix的文件系统。以下这些是主设备号。)
  *
  * 0 - unused (nodev)	没有用到
  * 1 - /dev/mem			内存设备
@@ -37,15 +36,16 @@
  * 7 - unnamed pipes	没有命名的管道
  */
 
-#define IS_SEEKABLE(x) ((x) >= 1 && (x) <= 3)	/* 判断设备是否是可以寻找定位的 */
+/* 判断设备是否是可以寻找定位的 */
+#define IS_SEEKABLE(x) ((x) >= 1 && (x) <= 3)
 
 /* 块设备操作类型 */
-#define READ 	0          		/* 读 */
-#define WRITE 	1         		/* 写 */
-#define READA 	2				/* read-ahead - don't pause */
-								/* 预读 */
-#define WRITEA 	3				/* "write-ahead" - silly, but somewhat useful */
-								/* 预写 */
+#define READ 	0		/* 读 */
+#define WRITE 	1		/* 写 */
+#define READA 	2		/* read-ahead - don't pause */
+						/* 预读 */
+#define WRITEA 	3		/* "write-ahead" - silly, but somewhat useful */
+						/* 预写 */
 
 void buffer_init(long buffer_end);			/* 高速缓冲区初始化 */
 
@@ -55,15 +55,15 @@ void buffer_init(long buffer_end);			/* 高速缓冲区初始化 */
 #define NAME_LEN 		14					/* 文件名长度值 */
 #define ROOT_INO 		1					/* 根i节点 */
 
-#define I_MAP_SLOTS 	8					/* i节点位图槽数 */
-#define Z_MAP_SLOTS 	8					/* 逻辑块(区段块)位图槽数 */
+#define I_MAP_SLOTS 	8					/* i节点位图的块数 */
+#define Z_MAP_SLOTS 	8					/* 逻辑块(区段块)位图的块数 */
 #define SUPER_MAGIC 	0x137F				/* 文件系统魔数 */
 
 #define NR_OPEN 		20					/* 进程最多打开文件数 */
 #define NR_INODE 		64					/* 系统同时最多使用i节点个数 */
-#define NR_FILE 		64					/* 系统最多文件个数(文件数组项数) */
-#define NR_SUPER 		8					/* 系统所含超级块个数(超级块数组项数) */
-#define NR_HASH 		307					/* 缓冲区Hash表数组项数值 */
+#define NR_FILE 		64					/* 系统最多文件个数(文件数组长度) */
+#define NR_SUPER 		8					/* 系统所含超级块个数(超级块数组长度) */
+#define NR_HASH 		307					/* 缓冲区Hash表数组长度 */
 #define NR_BUFFERS 		nr_buffers			/* 系统所含缓冲个数，初始化后不再改变 */
 #define BLOCK_SIZE 		1024				/* 数据块长度(字节值) */
 #define BLOCK_SIZE_BITS 10					/* 数据块长度所占比特位数 */
@@ -76,9 +76,10 @@ void buffer_init(long buffer_end);			/* 高速缓冲区初始化 */
 /* 每个逻辑块可存放的目录项数 */           
 #define DIR_ENTRIES_PER_BLOCK ((BLOCK_SIZE) / (sizeof (struct dir_entry)))
 
-/* 管道头、管道尾、管道大小、管道空、管道满、管道头指针递增 */
 #define PIPE_READ_WAIT(inode) 	((inode).i_wait)
 #define PIPE_WRITE_WAIT(inode) 	((inode).i_wait2)
+
+/* 管道头、管道尾、管道大小、管道空、管道满、管道头指针递增 */
 #define PIPE_HEAD(inode) 		((inode).i_zone[0])
 #define PIPE_TAIL(inode) 		((inode).i_zone[1])
 #define PIPE_SIZE(inode)		((PIPE_HEAD(inode) - PIPE_TAIL(inode)) & (PAGE_SIZE - 1))
@@ -164,7 +165,7 @@ struct file {
 	off_t f_pos;						/* 文件位置(读写偏移值) */
 };
 
-/* 内存中的磁盘超级块结构 */
+/* 内存中的超级块结构 */
 struct super_block {
 	unsigned short s_ninodes;			/* 节点数 */
 	unsigned short s_nzones;			/* 逻辑块数 */
@@ -188,7 +189,7 @@ struct super_block {
 	unsigned char s_dirt;				/* 已修改(脏)标志 */
 };
 
-/* 磁盘上超级块结构 */
+/* 磁盘上的超级块结构 */
 struct d_super_block {
 	unsigned short s_ninodes;			/* 节点数 */
 	unsigned short s_nzones;			/* 逻辑块数 */

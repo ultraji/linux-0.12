@@ -1,6 +1,10 @@
 # 建造工具 build 的说明
 
-生成build的源代码文件在```tools```目录下，该文件将被独立编译成一个可执行文件，只参与将bootsect、setup、system三个文件组合成一个映像文件Imgae，不会被包含到Imgae中，因此可以拿出来单独分析。
+生成build的源代码文件在```tools```目录下，该文件将被独立编译成一个可执行文件，只参与将bootsect、setup、system三个文件组合成一个映像文件Imgae，不会被包含到Imgae中，因此可以拿出来单独分析。该执行文件在主目录下的Makefile中被使用，通过以下以下命令生成映像文件Image。
+
+```
+tools/build boot/bootsect boot/setup tools/system $(ROOT_DEV) \$(SWAP_DEV) > Image
+```
 
 linux0.12内核映像如下所示：
 
@@ -22,6 +26,9 @@ linux0.12内核映像如下所示：
 build程序具体做了以下一些事(这里的扇区以1为第一个扇区)：
 
 1. 将读取根设备号和交换设备号写入Image中的第1个扇区(bootsect)的506、507、508、509字节处；
+
 2. 将bootsect的代码和数据写入Image中的第1个扇区(校验头部并去除MINIX执行文件头部(32B))；
+
 3. 将setup的代码和数据写入Image中的第2~5个扇区(校验头部并去除MINIX执行文件头部(32B))；
+
 4. 将system的代码和数据写入Image中的setup之后的扇区(校验头部并去除a.out格式头部(1KB))。

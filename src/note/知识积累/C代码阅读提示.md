@@ -4,7 +4,20 @@
 
     例如，在```include/linux/kernel.h```中有这样一行代码：
 
-    ```volatile void do_exit(long error_code);```
+    ```c
+    volatile void do_exit(long error_code);
+    ```
 
     这里其实是帮助编译器进行优化，对于```do_exit()```而言，它是永远都不会返回的。如果还将调用它的函数的返回地址保存在堆栈上的话，是没有任何意义的。但是加了```volatile```过后，就意味着这个函数不会返回，就相当于告诉编译器，我调用后是不用保存调用我的函数的返回地址的。这样就达到了优化的作用。这种优化来源于gcc，在gcc2.5版本以后，使用```noreturn```属性来做优化，原代码等同于```void do_exit(int error_code) __attribute__((noreturn));```，但是在gcc2.5的版本以前，没有```noreturn```属性。
     
+2. 字符串用法
+
+    例如，在```fs/namei.c```中有这么一行代码：
+
+    ```c
+    #define ACC_MODE(x) ("\004\002\006\377"[(x) & O_ACCMODE])
+    ```
+
+    上面宏中右侧表达式是访问数组的一种特殊使用方法。它基于这样的一个事实，即用数组名和数组下标所表示的数组项(例如a[b])的值等同于使用数组首指针(地址)加上该项偏移地址的形式的值*(a+b)，同时可知项a[b]也可以表示成b[a]形式。因此对于字符数组项形式为"LoveYou"[2](或者2["LoveYou"])就等同于*("LoveYou" + 2)。另外，字符串"LoveYou"在内存中被存储的位置就是其地址，因此数组项"LoveYou"[2]的值就是该字符串索引值为2的字符"v"。
+
+    例 "LoveYou"[2] = 2["LoveYou"] = *("LoveYou"+2)= 'v'

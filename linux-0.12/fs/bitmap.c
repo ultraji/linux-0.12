@@ -12,9 +12,8 @@
 
 /**
  * 将指定地址(addr)处的一块1024字节内存清零
- * 输入：eax = 0
- * 		ecx = 以字节为单位的数据块长度(BLOCK_SIZE/4)
- * 		edi = 指定起始地址addr
+ * 输入：eax = 0；ecx = 以字节为单位的数据块长度(BLOCK_SIZE/4)；edi = 指定起始地址addr
+ * @param[in]	addr	指定起始地址
  */
 #define clear_block(addr) 												\
 	__asm__("cld\n\t"         											\
@@ -23,14 +22,14 @@
 		::"a" (0), "c" (BLOCK_SIZE / 4), "D" ((long) (addr)))
 
 /**
- * 把指定地址开始的第nr个位偏移处的比特位置位(nr可大于32!)，返回原比特位值
- * 输入：%0 - eax(返回值)
- * 		%1 - eax(0)
- * 		%2 - nr，位偏移值
- * 		%3 - (addr)，addr的内容
- * 整个宏定义是一个语句表达式，该表达式值是最后res的值。btsl指令用于测试并设置位(Bit Test and
- *  Set)。把基地址(%3)和位偏移值(%2)所指定的位值先保存到进位标志CF中，然后设置该位为1。指令setb
- * 用于根据进位标志CF设置操作数(%al)。如果CF=1，则%al=1，否则%al=0。
+ * 把指定地址开始的第nr个位偏移处的比特位置位(nr可大于32!)，
+ * 输入：%0 - eax(返回值)；%1 - eax(0)；%2 - nr，位偏移值；%3 - (addr)，addr的内容。
+ * btsl指令用于测试并设置位(Bit Test and Set)。把基地址(%3)和位偏移值(%2)所指定的位值先保存到进
+ * 位标志CF中，然后设置该位为1。指令setb用于根据进位标志CF设置操作数(%al)。如果CF=1，则%al=1，
+ * 否则%al=0。
+ * @param[in]	nr		位偏移	
+ * @param[in]	addr	指定地址的基地址
+ * @retval		返回addr+nr处比特位的原位值	
  */
 #define set_bit(nr, addr) ({											\
 	register int res; 													\
@@ -41,12 +40,12 @@
 
 /**
  * 复位指定地址开始的第nr位偏移处的位，返回原位值的反码
- * 输入：%0 - eax(返回值)
- * 		%1 - eax(0)
- * 		%2 - nr，位偏移值
- * 		%3 - (addr)，addr的内容
+ * 输入：%0 - eax(返回值)；%1 - eax(0)；%2 - nr，位偏移值；%3 - (addr)，addr的内容
  * btrl指令用于测试并复位位(Bit Test and Reset)。其作用与上面的btsl类似，但是复位指定位。指令
  * setnb用于根据进位标志CF设置操作数（%al）。如果CF = 1，则%al = 0，否则%al = 1。
+ * @param[in]	nr		位偏移	
+ * @param[in]	addr	指定地址的基地址
+ * @retval		返回addr+nr处比特位的原位值的反码
  */
 #define clear_bit(nr, addr) ({											\
 	register int res;													\
@@ -57,11 +56,11 @@
 
 /**
  * 从addr开始寻找第1个0值位
- * 输入：%0 - ecx(返回值)
- * 		%1 - ecx(0)
- * 		%2 - esi(addr)
- * 在addr指定地址开始的位图中寻找第1个是0的位，并将其距离addr的位偏移值返回。addr是缓冲块数据区的地
- * 址，扫描寻找的范围是1024字节(8192位)。
+ * 输入：%0 - ecx(返回值)；%1 - ecx(0)；%2 - esi(addr)
+ * 在addr指定地址开始的位图中寻找第1个是0的位，并将其距离addr的位偏移值返回。addr是缓冲块数据区
+ * 的地址，扫描寻找的范围是1024字节(8192位)。
+ * @param[in]	addr	指定地址
+ * @retval		返回第一个0值位距离addr的位偏移值
  */
 #define find_first_zero(addr) ({ 										\
 	int __res; 															\
@@ -77,7 +76,8 @@
 			"cmpl $8192, %%ecx\n\t"										\
 			"jl 1b\n"													\
 		"3:"															\
-		:"=c" (__res):"c" (0), "S" (addr)); 							\
+		:"=c" (__res)													\
+		:"c" (0), "S" (addr)); 											\
 	__res;})
 
 /**
@@ -92,11 +92,11 @@ int free_block(int dev, int block)
 	struct super_block * sb;
 	struct buffer_head * bh;
 
-	/* 首先取设备dev上文件系统的超级块信息。如果指定设备超级块不存在，则出错停机 */
+	/* 首先取设备dev上文件系统的超级块信息 */
 	if (!(sb = get_super(dev))) {
 		panic("trying to free block on nonexistent device");
 	}
-	/* 若逻辑块号小于盘上数据区第1个逻辑块号或者大于设备上总逻辑块数，也出错停机 */
+	/* 若逻辑块号小于盘上数据区第1个逻辑块号或者大于设备上总逻辑块数 */
 	if (block < sb->s_firstdatazone || block >= sb->s_nzones) {
 		panic("trying to free block not in datazone");
 	}
@@ -117,8 +117,8 @@ int free_block(int dev, int block)
 	/* 先计算block在数据区开始算起的数据逻辑块号(从1开始计数) */
 	block -= sb->s_firstdatazone - 1 ;
 	/* 由于1个缓冲块有1024字节，即8192位 */
-	/* block&8191 可以得到block在逻辑块位图当前块中的位偏移位置 */
 	/* block/8192 即可计算出指定块block在逻辑位图中的哪个块上 */
+	/* block&8191 可以得到block在逻辑块位图当前块中的位偏移位置 */
 	if (clear_bit(block & 8191, sb->s_zmap[block / 8192]->b_data)) {
 		printk("block (%04x:%d) ", dev, block + sb->s_firstdatazone - 1);
 		printk("free_block: bit already cleared\n");
@@ -130,11 +130,11 @@ int free_block(int dev, int block)
 
 /**
  * 向设备申请一个逻辑块
- * 首先取得设备的超级块，并在逻辑块位图中寻找第一个0值比特位(代表空闲逻辑块)。然后设置该比特位，表
- * 示期望得到对应的逻辑块。接着为该逻辑块在缓冲区中取得一块对应缓冲块。最后将该缓冲块清零，并设置其
- * 已更新标志和已修改标志，并返回逻辑块号。
+ * 首先取得设备的超级块，并在逻辑块位图中寻找第一个0值比特位(代表空闲逻辑块)。然后设置该比特位，
+ * 表示期望得到对应的逻辑块。接着为该逻辑块在缓冲区中取得一块对应缓冲块。最后将该缓冲块清零，并
+ * 设置其已更新标志和已修改标志，并返回逻辑块号。
  * @param[in]	dev		设备号
- * @retval	成功返回逻辑块号，否则返回0。
+ * @retval		成功返回逻辑块号，否则返回0。
  */
 int new_block(int dev)
 {
@@ -154,8 +154,8 @@ int new_block(int dev)
 			}
 		}
 	}
-	/* 然后如果全部扫描完8块逻辑块位图的所有位还没有找到0值位或者位图所在的缓冲块指针无效(bn = NULL)则
-	 表示当前没有空闲逻辑块 */
+	/* 然后如果全部扫描完8块逻辑块位图的所有位还没有找到0值位或者位图所在的缓冲块指针无效
+	 (bn = NULL)则表示当前没有空闲逻辑块 */
 	if (i >= 8 || !bh || j >= 8192) {
 		return 0;
 	}
@@ -163,7 +163,7 @@ int new_block(int dev)
 	if (set_bit(j, bh->b_data)) {
 		panic("new_block: bit already set");
 	}
-	bh->b_dirt = 1;		/* 位图已修改 */
+	bh->b_dirt = 1;
 	/* 计算该块在逻辑块位图中位偏移值，偏移值大于该设备上的总逻辑块数，则出错 */
 	j += i * 8192 + sb->s_firstdatazone - 1;
 	if (j >= sb->s_nzones) {
@@ -184,6 +184,8 @@ int new_block(int dev)
 	brelse(bh);
 	return j;
 }
+
+// 下面两个函数与上面逻辑块操作类似，只是对象换成了i节点
 
 /**
  * 释放指定的i节点
@@ -222,7 +224,7 @@ void free_inode(struct m_inode * inode)
 	if (!(bh = sb->s_imap[inode->i_num >> 13])) { 
 		panic("nonexistent imap in superblock");
 	}
-	/* 现在我们复位i节点对应的节点位图中的位*/
+	/* 现在我们复位i节点对应的节点位图中的位 */
 	if (clear_bit(inode->i_num & 8191, bh->b_data)) {
 		printk("free_inode: bit already cleared.\n\r");
 	}
@@ -259,14 +261,14 @@ struct m_inode * new_inode(int dev)
 			}
 		}
 	}
-	/* 如果全部扫描完还没找到空闲i节点或者位图所在的缓冲块无效(bh = NULL)，则放回先前申请的
-	 i节点表中的i节点，并返回空指针退出 */
+	/* 如果全部扫描完还没找到空闲i节点或者位图所在的缓冲块无效(bh = NULL)，则放回先前申请的i节
+	 点表中的i节点，并返回空指针退出 */
 	if (!bh || j >= 8192 || j + i * 8192 > sb->s_ninodes) {
 		iput(inode);
 		return NULL;
 	}
-	/* 现在已经找到了还未使用的i节点号j。于是置位i节点j对应的i节点位图相应比特位。然后置i节点
-	位图所在缓冲块已修改标志 */
+	/* 现在已经找到了还未使用的i节点号j。于是置位i节点j对应的i节点位图相应比特位。然后置i节点位
+	 图所在缓冲块已修改标志 */
 	if (set_bit(j, bh->b_data)) {
 		panic("new_inode: bit already set");
 	}

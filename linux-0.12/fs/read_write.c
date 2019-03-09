@@ -12,6 +12,8 @@
 #include <linux/sched.h>
 #include <asm/segment.h>
 
+#include <unistd.h>	/* import SEEK_SET,SEEK_CUR,SEEK_END | ultraji add */
+
 extern int rw_char(int rw,int dev, char * buf, int count, off_t * pos);
 extern int read_pipe(struct m_inode * inode, char * buf, int count);
 extern int write_pipe(struct m_inode * inode, char * buf, int count);
@@ -22,28 +24,42 @@ extern int file_read(struct m_inode * inode, struct file * filp,
 extern int file_write(struct m_inode * inode, struct file * filp,
 		char * buf, int count);
 
-int sys_lseek(unsigned int fd,off_t offset, int origin)
+/**
+ * 重定位文件读写指针 系统调用
+ * @param[in]	fd		文件句柄
+ * @param[in]	offset	文件读写指针偏移值
+ * @param[in]	origin	偏移的起始位置，可有三种选择：SEEK_SET、SEEK_CUR、SEEK_END
+ * @retval		成功返回读写偏移值，失败返回失败码
+ */
+int sys_lseek(unsigned int fd, off_t offset, int origin)
 {
 	struct file * file;
 	int tmp;
 
 	if (fd >= NR_OPEN || !(file=current->filp[fd]) || !(file->f_inode)
-	   || !IS_SEEKABLE(MAJOR(file->f_inode->i_dev)))
+	   || !IS_SEEKABLE(MAJOR(file->f_inode->i_dev))) {
 		return -EBADF;
-	if (file->f_inode->i_pipe)
+	}
+	if (file->f_inode->i_pipe) { /* 管道不能操作读写指针 */
 		return -ESPIPE;
+	}
 	switch (origin) {
-		case 0:
-			if (offset<0) return -EINVAL;
-			file->f_pos=offset;
+		case SEEK_SET:	/* 从文件开始处 */
+			if (offset < 0) {
+				return -EINVAL;
+			}
+			file->f_pos = offset;
 			break;
-		case 1:
-			if (file->f_pos+offset<0) return -EINVAL;
+		case SEEK_CUR:	/* 从当前读写位置 */
+			if (file->f_pos + offset < 0) {
+				return -EINVAL;
+			}
 			file->f_pos += offset;
 			break;
-		case 2:
-			if ((tmp=file->f_inode->i_size+offset) < 0)
+		case SEEK_END:	/* 从文件尾处 */
+			if ((tmp=file->f_inode->i_size+offset) < 0) {
 				return -EINVAL;
+			}
 			file->f_pos = tmp;
 			break;
 		default:
@@ -52,52 +68,82 @@ int sys_lseek(unsigned int fd,off_t offset, int origin)
 	return file->f_pos;
 }
 
-int sys_read(unsigned int fd,char * buf,int count)
+/**
+ * 读文件 系统调用
+ * @param[in]	fd		文件句柄
+ * @param[in]	buf		缓冲区
+ * @param[in]	count	欲读字节数
+ * @retval		成功返回读取的长度，失败返回错误码
+ */
+int sys_read(unsigned int fd, char * buf, int count)
 {
 	struct file * file;
 	struct m_inode * inode;
 
 	if (fd>=NR_OPEN || count<0 || !(file=current->filp[fd]))
 		return -EINVAL;
-	if (!count)
+	if (!count) {
 		return 0;
-	verify_area(buf,count);
-	inode = file->f_inode;
-	if (inode->i_pipe)
-		return (file->f_mode&1)?read_pipe(inode,buf,count):-EIO;
-	if (S_ISCHR(inode->i_mode))
-		return rw_char(READ,inode->i_zone[0],buf,count,&file->f_pos);
-	if (S_ISBLK(inode->i_mode))
-		return block_read(inode->i_zone[0],&file->f_pos,buf,count);
-	if (S_ISDIR(inode->i_mode) || S_ISREG(inode->i_mode)) {
-		if (count+file->f_pos > inode->i_size)
-			count = inode->i_size - file->f_pos;
-		if (count<=0)
-			return 0;
-		return file_read(inode,file,buf,count);
 	}
+	verify_area(buf, count); /* 验证存放数据的缓冲区内存限制 */
+	inode = file->f_inode;
+	if (inode->i_pipe) { /* 管道文件的读操作 */
+		return (file->f_mode & 1) ? read_pipe(inode, buf, count) : -EIO;
+	}
+	if (S_ISCHR(inode->i_mode)) { /* 字符设备的读操作 */
+		return rw_char(READ, inode->i_zone[0], buf, count, &file->f_pos);
+	}
+	if (S_ISBLK(inode->i_mode)) { /* 块设备的读操作 */
+		return block_read(inode->i_zone[0], &file->f_pos, buf, count);
+	}
+	/* 目录文件或常规文件 */
+	if (S_ISDIR(inode->i_mode) || S_ISREG(inode->i_mode)) {
+		if (count+file->f_pos > inode->i_size) {
+			count = inode->i_size - file->f_pos;
+		}
+		if (count <= 0) {
+			return 0;
+		}
+		return file_read(inode, file, buf, count);
+	}
+	/* 执行到这，说明无法判断文件属性 */
 	printk("(Read)inode->i_mode=%06o\n\r",inode->i_mode);
 	return -EINVAL;
 }
 
-int sys_write(unsigned int fd,char * buf,int count)
+
+/**
+ * 写文件系统调用
+ * @param[in]	fd		文件句柄
+ * @param[in]	buf		用户缓冲区
+ * @param[in]	count	欲写字节数
+ * @retval		成功返回写入的长度，失败返回错误码
+ */
+int sys_write(unsigned int fd, char * buf, int count)
 {
 	struct file * file;
 	struct m_inode * inode;
 	
-	if (fd>=NR_OPEN || count <0 || !(file=current->filp[fd]))
+	if (fd>=NR_OPEN || count<0 || !(file=current->filp[fd])) {
 		return -EINVAL;
-	if (!count)
+	}
+	if (!count) {
 		return 0;
+	}
 	inode=file->f_inode;
-	if (inode->i_pipe)
-		return (file->f_mode&2)?write_pipe(inode,buf,count):-EIO;
-	if (S_ISCHR(inode->i_mode))
-		return rw_char(WRITE,inode->i_zone[0],buf,count,&file->f_pos);
-	if (S_ISBLK(inode->i_mode))
-		return block_write(inode->i_zone[0],&file->f_pos,buf,count);
-	if (S_ISREG(inode->i_mode))
-		return file_write(inode,file,buf,count);
-	printk("(Write)inode->i_mode=%06o\n\r",inode->i_mode);
+	if (inode->i_pipe) { /* 管道的写操作 */
+		return (file->f_mode&2) ? write_pipe(inode, buf, count) : -EIO;
+	}
+	if (S_ISCHR(inode->i_mode)) { /* 字符设备的写操作 */
+		return rw_char(WRITE, inode->i_zone[0], buf, count, &file->f_pos);
+	}
+	if (S_ISBLK(inode->i_mode)) { /* 块设备的写操作 */
+		return block_write(inode->i_zone[0], &file->f_pos, buf, count);
+	}
+	if (S_ISREG(inode->i_mode)) { /* 文件的写操作 */
+		return file_write(inode, file, buf, count);
+	}
+	/* 执行到这，说明无法判断文件属性 */
+	printk("(Write)inode->i_mode=%06o\n\r", inode->i_mode);
 	return -EINVAL;
 }

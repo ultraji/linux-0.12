@@ -13,31 +13,43 @@
 #include <asm/segment.h>
 #include <linux/kernel.h>
 
+/**
+ * 读管道操作函数
+ * @param[in]	inode	管道对应的i节点
+ * @param[in]	buf		用户数据缓冲区指针
+ * @param[in]	count	读取的字节数
+ * @retval		成功返回读取的长度，失败返回错误码
+ */
 int read_pipe(struct m_inode * inode, char * buf, int count)
 {
 	int chars, size, read = 0;
 
-	while (count>0) {
+	while (count > 0) {
 		while (!(size=PIPE_SIZE(*inode))) {
 			wake_up(& PIPE_WRITE_WAIT(*inode));
-			if (inode->i_count != 2) /* are there any writers? */
+			if (inode->i_count != 2) { /* are there any writers? */
 				return read;
-			if (current->signal & ~current->blocked)
+			}
+			if (current->signal & ~current->blocked) {
 				return read?read:-ERESTARTSYS;
+			}
 			interruptible_sleep_on(& PIPE_READ_WAIT(*inode));
 		}
 		chars = PAGE_SIZE-PIPE_TAIL(*inode);
-		if (chars > count)
+		if (chars > count) {
 			chars = count;
-		if (chars > size)
+		}
+		if (chars > size) {
 			chars = size;
+		}
 		count -= chars;
 		read += chars;
 		size = PIPE_TAIL(*inode);
 		PIPE_TAIL(*inode) += chars;
 		PIPE_TAIL(*inode) &= (PAGE_SIZE-1);
-		while (chars-->0)
-			put_fs_byte(((char *)inode->i_size)[size++],buf++);
+		while (chars-->0) {
+			put_fs_byte(((char *)inode->i_size)[size++], buf++);
+		}
 	}
 	wake_up(& PIPE_WRITE_WAIT(*inode));
 	return read;
@@ -57,17 +69,20 @@ int write_pipe(struct m_inode * inode, char * buf, int count)
 			sleep_on(& PIPE_WRITE_WAIT(*inode));
 		}
 		chars = PAGE_SIZE-PIPE_HEAD(*inode);
-		if (chars > count)
+		if (chars > count) {
 			chars = count;
-		if (chars > size)
+		}
+		if (chars > size) {
 			chars = size;
+		}
 		count -= chars;
 		written += chars;
 		size = PIPE_HEAD(*inode);
 		PIPE_HEAD(*inode) += chars;
 		PIPE_HEAD(*inode) &= (PAGE_SIZE-1);
-		while (chars-->0)
+		while (chars-->0) {
 			((char *)inode->i_size)[size++]=get_fs_byte(buf++);
+		}
 	}
 	wake_up(& PIPE_READ_WAIT(*inode));
 	return written;
@@ -78,31 +93,36 @@ int sys_pipe(unsigned long * fildes)
 	struct m_inode * inode;
 	struct file * f[2];
 	int fd[2];
-	int i,j;
+	int i, j;
 
-	j=0;
-	for(i=0;j<2 && i<NR_FILE;i++)
-		if (!file_table[i].f_count)
+	j = 0;
+	for(i = 0; j<2 && i<NR_FILE; i ++) {
+		if (!file_table[i].f_count) {
 			(f[j++]=i+file_table)->f_count++;
-	if (j==1)
+		}
+	}
+	if (j==1) {
 		f[0]->f_count=0;
-	if (j<2)
+	}
+	if (j<2) {
 		return -1;
+	}
 	j=0;
-	for(i=0;j<2 && i<NR_OPEN;i++)
+	for(i=0;j<2 && i<NR_OPEN;i++) {
 		if (!current->filp[i]) {
 			current->filp[ fd[j]=i ] = f[j];
 			j++;
 		}
-	if (j==1)
+	}
+	if (j==1) {
 		current->filp[fd[0]]=NULL;
+	}
 	if (j<2) {
 		f[0]->f_count=f[1]->f_count=0;
 		return -1;
 	}
 	if (!(inode=get_pipe_inode())) {
-		current->filp[fd[0]] =
-			current->filp[fd[1]] = NULL;
+		current->filp[fd[0]] = current->filp[fd[1]] = NULL;
 		f[0]->f_count = f[1]->f_count = 0;
 		return -1;
 	}
@@ -115,12 +135,19 @@ int sys_pipe(unsigned long * fildes)
 	return 0;
 }
 
+/**
+ * 管道io控制函数
+ * @param[in]	pino	管道i节点指针
+ * @param[in]	cmd		控制命令
+ * @param[in]	arg		参数
+ * @retval		返回0表示执行成功，否则返回出错码
+ */
 int pipe_ioctl(struct m_inode *pino, int cmd, int arg)
 {
 	switch (cmd) {
 		case FIONREAD:
-			verify_area((void *) arg,4);
-			put_fs_long(PIPE_SIZE(*pino),(unsigned long *) arg);
+			verify_area((void *) arg, 4);
+			put_fs_long(PIPE_SIZE(*pino), (unsigned long *) arg);
 			return 0;
 		default:
 			return -EINVAL;

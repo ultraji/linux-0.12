@@ -13,8 +13,14 @@
 #include <string.h>
 
 /* we use this so that we can do without the ctype library */
+/* 我们使用下面的定义,这样我们就可以不使用ctype库了 */
 #define is_digit(c)	((c) >= '0' && (c) <= '9')
 
+/**
+ * 数字字符串转换成整数
+ * @param[in] 	**s 	指向数字字符串指针的指针
+ * @retval		结果数值(另外，指针将前移)
+ */
 static int skip_atoi(const char **s)
 {
 	int i=0;
@@ -24,18 +30,27 @@ static int skip_atoi(const char **s)
 	return i;
 }
 
-#define ZEROPAD	1		/* pad with zero */
-#define SIGN	2		/* unsigned/signed long */
-#define PLUS	4		/* show plus */
-#define SPACE	8		/* space if plus */
-#define LEFT	16		/* left justified */
+/* 转换类型的各种符号常数 */
+#define ZEROPAD	1		/* pad with zero */ /* 填充零 */
+#define SIGN	2		/* unsigned/signed long */ /* 无符号/符号长整数 */
+#define PLUS	4		/* show plus */ /* 显示加 */
+#define SPACE	8		/* space if plus */ /* 如是加号,则置空格 */
+#define LEFT	16		/* left justified */ /* 左对齐 */
 #define SPECIAL	32		/* 0x */
-#define SMALL	64		/* use 'abcdef' instead of 'ABCDEF' */
+#define SMALL	64		/* use 'abcdef' instead of 'ABCDEF' */ /* 使用小写字母 */
 
-#define do_div(n,base) ({ \
-int __res; \
-__asm__("divl %4":"=a" (n),"=d" (__res):"0" (n),"1" (0),"r" (base)); \
-__res; })
+/**
+ * 除操作
+ * @param[in]	n		被除数
+ * @param[in]	base	除数
+ * @retval		函数返回余数(同时，n为商) */
+#define do_div(n,base) ({ 													\
+	int __res;																\
+	__asm__("divl %4"														\
+		:"=a" (n),"=d" (__res)												\
+		:"0" (n),"1" (0),"r" (base));										\
+	__res; })
+
 
 static char * number(char * str, int num, int base, int size, int precision
 	,int type)

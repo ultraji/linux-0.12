@@ -18,8 +18,19 @@
 #include <const.h>
 #include <sys/stat.h>
 
+/* 由文件名查找对应i节点的内部函数 */
 static struct m_inode * _namei(const char * filename, struct m_inode * base,
 	int follow_links);
+
+// 例 "loveyou"[2] = 2["loveyou"] = *("loveyou"+2)= 'v'
+/* 下面是访问模式宏。x是头文件include/fcntl.h中行7行开始定义的文件访问(打开)标志。这个宏根据文
+ 件访问标志x的值来索引双引号中对应的数值。双引号中有4个八进制数值(实际表示4个控制字符):
+ "\004" - r		0
+ "\002" - w		1
+ "\006" - rw	2
+ "\377" - wxrwxrwx  3
+ 例如，如果x为2，则该宏返回八进制值006，表示rw。另外，其中O_ACCMODE = 00003，现在数组访问长度。
+*/
 
 #define ACC_MODE(x) ("\004\002\006\377"[(x)&O_ACCMODE])
 
@@ -27,11 +38,14 @@ static struct m_inode * _namei(const char * filename, struct m_inode * base,
  * comment out this line if you want names > NAME_LEN chars to be
  * truncated. Else they will be disallowed.
  */
+/*
+ * 如果想让文件名长度 > NAME_LEN个的字符被截掉，就将下面定义注释掉。
+ */
 /* #define NO_TRUNCATE */
 
-#define MAY_EXEC 1
-#define MAY_WRITE 2
-#define MAY_READ 4
+#define MAY_EXEC 	1	/* 可执行 */
+#define MAY_WRITE	2	/* 可写 */
+#define MAY_READ 	4	/* 可读 */
 
 /*
  *	permission()
@@ -40,19 +54,37 @@ static struct m_inode * _namei(const char * filename, struct m_inode * base,
  * I don't know if we should look at just the euid or both euid and
  * uid, but that should be easily changed.
  */
-static int permission(struct m_inode * inode,int mask)
-{
-	int mode = inode->i_mode;
+/*
+ *	permission()
+ *
+ * 该函数用于检测一个文件的读/写/执行权限。我不知道是否只需检查euid，还是需要检查euid和uid两者，
+ * 不过这很容易修改。
+ */
 
-/* special case: not even root can read/write a deleted file */
-	if (inode->i_dev && !inode->i_nlinks)
+/**
+ * 检测文件访问许可权限
+ * @param[in]	inode	文件的i节点指针
+ * @param[in]	mask	访问属性屏蔽码
+ * @retval		访问许可返回1，否则返回0 
+ */
+static int permission(struct m_inode * inode, int mask)
+{
+	int mode = inode->i_mode;	/* 文件访问属性 */
+	/* |...|r|w|x|r|w|x|r|w|x| 低九位从高到底，分别是用户、组、其他的读/写/执行 */
+
+	/* special case: not even root can read/write a deleted file */
+	/* 特殊情况:即使是超级用户(root)也不能读/写一个已被删除的文件. */
+	if (inode->i_dev && !inode->i_nlinks) {
 		return 0;
-	else if (current->euid==inode->i_uid)
+	} else if (current->euid==inode->i_uid) {
 		mode >>= 6;
-	else if (in_group_p(inode->i_gid))
+	} else if (in_group_p(inode->i_gid)) {
 		mode >>= 3;
-	if (((mode & mask & 0007) == mask) || suser())
+	}
+	
+	if (((mode & mask & 0007) == mask) || suser()) {
 		return 1;
+	}
 	return 0;
 }
 
@@ -63,18 +95,41 @@ static int permission(struct m_inode * inode,int mask)
  *
  * NOTE! unlike strncmp, match returns 1 for success, 0 for failure.
  */
-static int match(int len,const char * name,struct dir_entry * de)
+/*
+ * ok，我们不能使用strncmp字符串比较函数，因为名称不在我们的数据空间(不在内核空间)。因而我们只
+ * 能使用match()。问题不大，match()同样也处理一些完整的测试。
+ *
+ * 注意！与strncmp不同的是match()成功时返回1，失败时返回0。
+ */
+// TODO: 不懂上面的话的意思
+
+/**
+ * 指定长度字符串比较函数
+ * @param[in]	len		比较的字符串长度
+ * @param[in]	name	文件名指针
+ * @param[in]	de		目录项结构
+ * @retval		相同返回1，不同返回0
+ */
+static int match(int len, const char * name, struct dir_entry * de)
 {
 	register int same __asm__("ax");
 
-	if (!de || !de->inode || len > NAME_LEN)
+	/* 目录项指针空，或者目录项i节点等于0，或者要比较的字符串长度超过文件名长度 */
+	if (!de || !de->inode || len > NAME_LEN){
 		return 0;
+	}
 	/* "" means "." ---> so paths like "/usr/lib//libc.a" work */
-	if (!len && (de->name[0]=='.') && (de->name[1]=='\0'))
+	/* ""当作"."来看待 ---> 这样就能处理象"/usr/lib//libc.a"那样的路径名 */
+	if (!len && (de->name[0]=='.') && (de->name[1]=='\0')) {
 		return 1;
-	if (len < NAME_LEN && de->name[len])
+	}
+	/* 有点取巧，de->name[len] != '\0'说明de->name的长度大于len，长度不匹配 */
+	if (len < NAME_LEN && de->name[len]) {
 		return 0;
-	__asm__("cld\n\t"
+	}
+	/* 使用嵌入汇编语句进行快速比较操作 */
+	__asm__(
+		"cld\n\t"
 		"fs ; repe ; cmpsb\n\t"
 		"setz %%al"
 		:"=a" (same)
@@ -94,6 +149,25 @@ static int match(int len,const char * name,struct dir_entry * de)
  * This also takes care of the few special cases due to '..'-traversal
  * over a pseudo-root and a mount point.
  */
+/*
+ *	find_entry()
+ *
+ * 在指定目录中寻找一个与名字匹配的目录项。返回一个含有找到目录项的高速缓冲块以及目录项本身(作
+ * 为一个参数--res_dir)。该函数并不读取目录项的i节点--如果需要的话则自己操作。
+ *
+ * 由于有'..'目录项，因此在操作期间也会对几种特殊情况分别处理--比如横越一个伪根目录以及安装点。
+ */
+
+/**
+ * 查找指定目录和文件名的目录项
+ * 该函数在指定目录的数据(文件)中搜索指定文件名的目录项。并对指定文件名是'..'的情况根据当前进
+ * 行的相关设置进行特殊处理。
+ * @param[in]	*dir	指定目录i节点的指针
+ * @param[in]	name	文件名
+ * @param[in]	namelen	文件名长度
+ * @retval		成功则返回高速缓冲区指针，并在*res_dir处返回的目录项结构指针
+ *				失败则返回空指针NULL
+ */
 static struct buffer_head * find_entry(struct m_inode ** dir,
 	const char * name, int namelen, struct dir_entry ** res_dir)
 {
@@ -112,14 +186,17 @@ static struct buffer_head * find_entry(struct m_inode ** dir,
 #endif
 	entries = (*dir)->i_size / (sizeof (struct dir_entry));
 	*res_dir = NULL;
-/* check for '..', as we might have to do some "magic" for it */
+	/* check for '..', as we might have to do some "magic" for it */
+	/* 检查目录项'..',因为我们可能需要对其进行特殊处理 */
+	// TODO: 为什么不用name[0]和name[1]替代？
 	if (namelen==2 && get_fs_byte(name)=='.' && get_fs_byte(name+1)=='.') {
-/* '..' in a pseudo-root results in a faked '.' (just change namelen) */
-		if ((*dir) == current->root)
-			namelen=1;
-		else if ((*dir)->i_num == ROOT_INO) {
-/* '..' over a mount-point results in 'dir' being exchanged for the mounted
-   directory-inode. NOTE! We set mounted, so that we can iput the new dir */
+	/* '..' in a pseudo-root results in a faked '.' (just change namelen) */
+	/* 伪根中的'..'如同一个假'.'(只需改变名字长度) */
+		if ((*dir) == current->root) {
+			namelen = 1;
+		} else if ((*dir)->i_num == ROOT_INO) {
+	/* '..' over a mount-point results in 'dir' being exchanged for the mounted
+   	 directory-inode. NOTE! We set mounted, so that we can iput the new dir */
 			sb=get_super((*dir)->i_dev);
 			if (sb->s_imount) {
 				iput(*dir);

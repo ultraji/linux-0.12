@@ -5,6 +5,8 @@ typedef char *va_list;
 
 /* Amount of space required in an argument list for an arg of type TYPE.
    TYPE may alternatively be an expression whose type is used.  */
+/* 下面给出了类型为TYPE的arg参数列表所要求的空间容量。TYPE也可以是使用该类型的一个表达式 */
+
 
 #define __va_rounded_size(TYPE)  \
   (((sizeof (TYPE) + sizeof (int) - 1) / sizeof (int)) * sizeof (int))

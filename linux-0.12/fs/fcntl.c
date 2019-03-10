@@ -19,7 +19,7 @@ extern int sys_close(int fd);
  * 复制文件句柄(文件描述符)
  * @param[in]	fd		欲复制的文件句柄
  * @param[in]	arg		指定新文件句柄的最小数值
- * @retval		新文件句柄或出错码
+ * @retval		成功返回新文件句柄，否则出错码
  */
 static int dupfd(unsigned int fd, unsigned int arg)
 {

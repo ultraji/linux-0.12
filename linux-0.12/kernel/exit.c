@@ -4,7 +4,7 @@
  *  (C) 1991  Linus Torvalds
  */
 
-#define DEBUG_PROC_TREE
+#define DEBUG_PROC_TREE	/* 定义符号"调度进程树" */
 
 #include <errno.h>
 #include <signal.h>
@@ -18,6 +18,15 @@
 int sys_pause(void);
 int sys_close(int fd);
 
+
+/** 
+ * 释放指定进程占用的任务槽及其任务数据结构占用的内在页面
+ * 该函数在后面的sys_kill()和sys_waitpid()函数中被调用。扫描任务指针数组表task[]以寻找指定的任
+ * 务。如果找到，则首先清空该任务槽，然后释放该任务数据结构所占用的内在页面，最后执行调度函数并
+ * 返回立即退出。如果在任务数组表中没有找到指定任务对应的项，则内核panic。
+ * @param[in]	p		任务数据结构指针
+ * @retval		void
+ */
 void release(struct task_struct * p)
 {
 	int i;
@@ -50,6 +59,10 @@ void release(struct task_struct * p)
  * Check to see if a task_struct pointer is present in the task[] array
  * Return 0 if found, and 1 if not found.
  */
+/*
+ * 检查task[]数组中是否存在一个指定的task_struct结构指针p。
+ */
+/* 检测任务结构指针p */
 int bad_task_ptr(struct task_struct *p)
 {
 	int 	i;

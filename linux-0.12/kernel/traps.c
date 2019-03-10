@@ -11,22 +11,23 @@
  * but possibly by killing it outright if necessary).
  */
 /* 
- * 在程序 asm.s 中保存了一些状态后，本程序用来处理硬件陷阱和故障。目前主要用于调试目的，
- * 以后将扩展用来杀死遭损坏的进程（主是通过发送一个信号，但如果必要也会直接杀死）。
+ * 在程序asm.s中保存了一些状态后，本程序用来处理硬件陷阱和故障。目前主要用于调试目的，以后将扩
+ * 展用来杀死遭损坏的进程（主是通过发送一个信号，但如果必要也会直接杀死）。
  */
 #include <string.h>
 
 #include <linux/head.h>
-#include <linux/sched.h>		/* 调度程序头文件,定义了任务结构task_struct,初始任务0的数据 */
+#include <linux/sched.h>
 #include <linux/kernel.h>
-#include <asm/system.h>			/* 系统头文件.定义了设置或修改描述符/中断门等的嵌入式汇编宏 */
+#include <asm/system.h>
 #include <asm/segment.h>
-#include <asm/io.h>				/* 输入/输出头文件.定义硬件端口输入/输出宏汇编语句 */
+#include <asm/io.h>
 
-// 取seg中地址addr处的一个字节
-// 参数:  seg - 段选择符
-// 		 addr - 段内指定地址
-// 输出: %0 - eax(__res);输入: %1 - eax(seg); %2 - 内存地址(*(addr))
+/**
+ * 取seg中地址addr处的一个字节
+ * @param[in]	seg		段选择符
+ * @param[in]	addr	段内指定地址
+ */
 #define get_seg_byte(seg, addr) ({ 									\
 	register char __res; 											\
 	__asm__("push %%fs;mov %%ax,%%fs;movb %%fs:%2,%%al;pop %%fs" 	\

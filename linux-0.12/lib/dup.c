@@ -9,10 +9,7 @@
 
 /** 
  * 复制文件描述符
- * int dup(int fd)
- * 直接调用了系统中断int 0x80，参数是__NR_dup。
- * @param[in]   fd      文件描述符
- * @retval  	int
- * 
+ * @param[in]	fd		文件描述符
+ * @retval		成功返回新文件句柄，失败返回出错码
  */
 _syscall1(int, dup, int, fd)

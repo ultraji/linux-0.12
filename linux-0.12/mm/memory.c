@@ -9,8 +9,7 @@
  * things wanted, and it should be easy to implement. - Linus
  */
 /*
- * 需求加载是从91.12.1开始编写的确 - 在程序编制表中似乎是最重要的程序，并且
- * 应该是很容易编制的 - Linus
+ * 需求加载是从91.12.1开始编写 - 在程序编制表中似乎是最重要的程序，并且应该是很容易编制的 - Linus
  */
 
 /*
@@ -24,11 +23,11 @@
  * Also corrected some "invalidate()"s - I wasn't doing enough of them.
  */
 /*
- * Ok，需求加载是比较容易编写的，而共享页面却需要有点技巧。共享页面程序
- * 是91.12.2开始编写的，好像能够工作 - Linus。
+ * Ok，需求加载是比较容易编写的，而共享页面却需要有点技巧。共享页面程序是91.12.2开始编写的，好
+ * 像能够工作 - Linus。
  *
- * 通过执行大约30个/bin/sh对共享操作进行了测试：在老内核当中需要占用多于6MB的内
- * 在，而目前却不用。现在看来工作得很好。
+ * 通过执行大约30个/bin/sh对共享操作进行了测试：在老内核当中需要占用多于6MB的内在，而目前却不
+ * 用。现在看来工作得很好。
  *
  * 对“invalidate()”函数也进行了修改--在这方面我还做得不够。
  */
@@ -41,10 +40,10 @@
  * 20.12.91  -  Ok, making the swap-device changeable like the root.
  */
 /*
- * 91.12.18开始编写真正的虚拟内存管理VB（交换页面到/从磁盘）。需要对此考虑很多
- * 			并且需要作很多工作。呵呵，也只能这样了。
- * 91.12.19 - 在某种程序上可以工作了，但有时会出错，不知道怎么回事。
- *            找到错误了，现在好像一切都能工作了。
+ * 91.12.18开始编写真正的虚拟内存管理VB（交换页面到/从磁盘）。需要对此考虑很多并且需要作很多
+ *				工作。呵呵，也只能这样了。
+ * 91.12.19 - 在某种程序上可以工作了，但有时会出错，不知道怎么回事。找到错误了，现在好像一切
+ 				都能工作了。
  * 91.12.20 - OK，把交换设备修改成可更改的了，就像根文件设备那样。
  */
 
@@ -52,20 +51,21 @@
 
 #include <asm/system.h>
 
-#include <linux/sched.h>		/* 调度程序头文件，定义任务结构 task_struct，任务0的数据 */
+#include <linux/sched.h>
 #include <linux/head.h>
 #include <linux/kernel.h>
 
-// 该宏用于判断给定线性地址是否位于当前进程的代码段中，“(((addr)+4095)&~4095)”用于取得线性
-// 地址addr所在内存页面的末端地址。
-#define CODE_SPACE(addr) ((((addr) + 4095) & ~4095) < \
-current->start_code + current->end_code)
+/* 该宏用于判断给定线性地址是否位于当前进程的代码段中，“(((addr)+4095)&~4095)”用于取得线性
+ 地址addr所在内存页面的末端地址 */
+#define CODE_SPACE(addr) \
+	((((addr) + 4095) & ~4095) < current->start_code + current->end_code)
 
-unsigned long HIGH_MEMORY = 0;		/* 全局变量，存放实际物理内存最高端地址 */
+unsigned long HIGH_MEMORY = 0;/* 全局变量，存放实际物理内存最高端地址 */
 
-// 从 from 处复制一页内存到 to 处(4KB)
+/* 从 from 处复制一页内存到 to 处(4KB) */
 #define copy_page(from, to) \
 		__asm__("cld ; rep ; movsl"::"S" (from),"D" (to),"c" (1024))
+
 
 // 内存映射字节图(1字节代表1页内存)。每个页面对应的字节用于标志页面当前被引用(占用)次数。它最大
 // 可以映射15MB的内存空间。在初始化函数 mem_init() 中，对于不能用作主内存区页面的位置均都参选被
@@ -841,19 +841,22 @@ void mem_init(long start_mem, long end_mem)
 
 
 
-// 显示系统内存信息
-//
-// 根据内存映射字节数组 mem_map[] 中的信息以及页目录和页表内容统计系统中使用的内存页面数和主内存
-// 区中总物理内存页面数。该函数在chr_drv/keyboard.S程序被调用。即当按下"Shift + Scroll Lock"组
-// 合键时会显示系统内存统计信息。
+/**
+ * 显示系统内存信息
+ * 根据内存映射字节数组 mem_map[] 中的信息以及页目录和页表内容统计系统中使用的内存页面数和主内
+ * 存区中总物理内存页面数。该函数在chr_drv/keyboard.S程序被调用。即当按下"Shift + Scroll Lock"
+ * 组合键时会显示系统内存统计信息。
+ * @param[in]	void
+ * @retval		void
+ */
 void show_mem(void)
 {
 	int i, j, k, free = 0, total = 0;
 	int shared = 0;
 	unsigned long * pg_tbl;
 
-	// 根据内存映射字节数组 mem_map[]，统计系统主内存区页面总数 total，以及其中空闲页面数 free 
-	// 和被共享的页面数 shared，并显示这些信息。
+	/* 根据内存映射字节数组mem_map[]，统计系统主内存区页面总数total，以及其中空闲页面数free 
+	和被共享的页面数shared，并显示这些信息。*/
 	printk("Mem-info:\n\r");
 	for (i = 0 ; i < PAGING_PAGES ; i++) {
 		if (mem_map[i] == USED) {		/* 1MB 以上内存系统占用的页面 */
@@ -916,6 +919,5 @@ void show_mem(void)
 			k = 0;
 		}
 	}
-	// 最后显示系统中正在使用的内存页面和主内存区中总的内存页面数
 	printk("Memory found: %d (%d)\n\r\n\r", free - shared, total);
 }

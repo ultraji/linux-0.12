@@ -18,8 +18,8 @@
 #include <linux/head.h>
 #include <linux/kernel.h>
 
-// 每个字节8位，因此1页(4096B)共有32768个位。若1个位对应1页内存，则最多可管理32768个页
-// 面，对应128MB内存容量。
+/* 每个字节8位，因此1页(4096B)共有32768个位。若1个位对应1页内存，则最多可管理32768个页面，对应
+ 128MB内存容量 */
 #define SWAP_BITS (4096 << 3)
 
 // 位操作宏。通过给定不同的"op"，可定义对指定比特位进行测试，设置或清除三种操作。
@@ -283,30 +283,32 @@ repeat:
 		:"0" (0), "i" (LOW_MEM), "c" (PAGING_PAGES),
 		"D" (mem_map + PAGING_PAGES - 1)
 		);
-	if (__res >= HIGH_MEMORY)	/* 页面地址大于实际内存容量则重新寻找 */
+	if (__res >= HIGH_MEMORY) {	/* 页面地址大于实际内存容量则重新寻找 */
 		goto repeat;
-	if (!__res && swap_out())	/* 若没有得到空闲页面则执行交换处理,并重新查找*/
+	}
+	if (!__res && swap_out()) {	/* 若没有得到空闲页面则执行交换处理,并重新查找*/
 		goto repeat;
+	}
 	return __res;				/* 返回空闲物理页面地址 */
 }
 
-// 内存交换初始化.
+/**
+ * 内存交换初始化
+ * @param[in]	void
+ * @retval		void
+ */
 void init_swapping(void)
 {
-	// blk_size[]指向指定主设备号的块设备块数数组。该块数数组每一项对应一个设备上所拥
-	// 有的数据块总数(1块大小=1KB)。
-	extern int *blk_size[];				/* blk_drv/ll_rw_blk.c */
+	extern int *blk_size[];
 	int swap_size, i, j;
 
-	// 如果没有定义交换设备则返回。如果交换设备没有设置块数数组，则显示并返回。
-	if (!SWAP_DEV)
+	if (!SWAP_DEV) {
 		return;
+	}
 	if (!blk_size[MAJOR(SWAP_DEV)]) {
 		printk("Unable to get size of swap device\n\r");
 		return;
 	}
-	// 取指定交换设备号的交换区数据块总数swap_size。若为0则返回，若总块数小于100块则显
-	// 示信息"交换设备区太小"，然后退出。
 	swap_size = blk_size[MAJOR(SWAP_DEV)][MINOR(SWAP_DEV)];
 	if (!swap_size)
 		return;
@@ -314,23 +316,14 @@ void init_swapping(void)
 		printk("Swap device too small (%d blocks)\n\r", swap_size);
 		return;
 	}
-	// 每页4个数据块，所以swap_size >>= 2计算出交换页面总数。
-	// 交换数据块总数转换成对应可交换页面总数。该值不能大于SWAP_BITS所能表示的页面数。即
-	// 交换页面总数不得大于32768。
 	swap_size >>= 2;
 	if (swap_size > SWAP_BITS)
 		swap_size = SWAP_BITS;
-	// 然后申请一页物理内存来存放交换页面映射数组swap_bitmap，其中每1比特代表1页交换页面
 	swap_bitmap = (char *) get_free_page();
 	if (!swap_bitmap) {
 		printk("Unable to start swapping: out of memory :-)\n\r");
 		return;
 	}
-	// read_swap_page(nr,buffer)被定义为ll_rw_page(READ,SWAP_DEV, (nr), (buffer))。
-	// 这里把交换设备上的页面0读到swap_bitmap页面中。该页面是交换区管理页面。其中第4086
-	// 字节开始处含有10个字符的交换设备特征字符串"SWAP-SPACE"。若没有找到该特征字符串，则
-	// 说明不是一个有效的交换设备。于是显示信息，释放刚申请的物理页面并退出函数。否则将特征
-	// 字符串字节清零。
 	read_swap_page(0, swap_bitmap);
 	if (strncmp("SWAP-SPACE", swap_bitmap + 4086, 10)) {
 		printk("Unable to find swap-space signature\n\r");
@@ -338,12 +331,7 @@ void init_swapping(void)
 		swap_bitmap = NULL;
 		return;
 	}
-	// 将交换设备的标志字符串"SWAP-SPACE"字符串清空
 	memset(swap_bitmap + 4086, 0, 10);
-	// 然后检查读入的交换位映射图。应该32768个位全为0，若位图中有置位的位0，则表示位图
-	// 有问题，于是显示出错信息，释放位图占用的页面并退出函数。为了加快检查速度，这里首先
-	// 仅挑选查看位图0和最后一个交换页面对应的位，即swap_size交换页面对应的位，以及随后
-	// 到SWAP_BITS(32768)位。
 	for (i = 0 ; i < SWAP_BITS ; i++) {
 		if (i == 1)
 			i = swap_size;
@@ -354,9 +342,6 @@ void init_swapping(void)
 			return;
 		}
 	}
-	// 然后再仔细地检测位1到位swap_size所有位是否为0。若存在不是0的位，则表示位图有问题，
-	// 于是释放位图占用的页面并退出函数。否则显示交换设备工作正常以及交换页面和交换空间总字
-	// 节数。
 	j = 0;
 	for (i = 1 ; i < swap_size ; i++)
 		if (bit(swap_bitmap, i))

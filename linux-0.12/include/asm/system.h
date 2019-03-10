@@ -36,7 +36,7 @@ __asm__ ("movl %%esp,%%eax\n\t"					\
  * @param[in]	dpl			描述符特权级
  * @param[in]	addr		偏移地址
  */
-#define _set_gate(gate_addr,type,dpl,addr)					\
+#define _set_gate(gate_addr, type, dpl, addr)				\
 	__asm__ ("movw %%dx,%%ax\n\t"							\
 			"movw %0,%%dx\n\t"								\
 			"movl %%eax,%1\n\t"								\

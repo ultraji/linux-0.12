@@ -25,8 +25,9 @@ static int skip_atoi(const char **s)
 {
 	int i=0;
 
-	while (is_digit(**s))
+	while (is_digit(**s)) {
 		i = i*10 + *((*s)++) - '0';
+	}
 	return i;
 }
 
@@ -41,10 +42,10 @@ static int skip_atoi(const char **s)
 
 /**
  * 除操作
- * @param[in]	n		被除数
+ * @param[in/out]	n		被除数
  * @param[in]	base	除数
  * @retval		函数返回余数(同时，n为商) */
-#define do_div(n,base) ({ 													\
+#define do_div(n, base) ({ 													\
 	int __res;																\
 	__asm__("divl %4"														\
 		:"=a" (n),"=d" (__res)												\
@@ -52,6 +53,15 @@ static int skip_atoi(const char **s)
 	__res; })
 
 
+/**
+ * 将整数转换为指定进制的字符串
+ * @param[in]	num		整数
+ * @param[in]	base	进制
+ * @param[in]	size	字符串长度
+ * @param[in]	precision 数字长度(精度)
+ * @param[in]	type	类型选项.
+ * @retval		数字转换成字符串后指向该字符串末端后面的指针
+ */
 static char * number(char * str, int num, int base, int size, int precision
 	,int type)
 {
@@ -104,6 +114,14 @@ static char * number(char * str, int num, int base, int size, int precision
 	return str;
 }
 
+
+/**
+ * 下面函数是送格式化输出到字符串中
+ * 为了能在内核中使用格式化的输出,Linus在内核实现了该C标准函数.
+ * @param[in]	fmt	格式字符串
+ * @param[in]	args 个数变化的值
+ * @param[in]	buf	输出字符串缓冲区
+ */
 int vsprintf(char *buf, const char *fmt, va_list args)
 {
 	int len;
@@ -234,12 +252,14 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 			break;
 
 		default:
-			if (*fmt != '%')
+			if (*fmt != '%') {
 				*str++ = '%';
-			if (*fmt)
+			}
+			if (*fmt) {
 				*str++ = *fmt;
-			else
+			} else {
 				--fmt;
+			}
 			break;
 		}
 	}

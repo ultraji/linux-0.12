@@ -14,6 +14,15 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+/**
+ * 文件读函数
+ * 根据i节点和文件结构，读取文件中数据。
+ * @param[in]	*inode	i节点
+ * @param[in]	*filp	
+ * @param[in]	buf		指定用户空间中缓冲区的位置
+ * @param[in]	count	需要读取的字节数
+ * @retval		实际读取的字节数，或出错号(小于0)
+*/
 int file_read(struct m_inode * inode, struct file * filp, char * buf, int count)
 {
 	int left,chars,nr;
@@ -45,6 +54,15 @@ int file_read(struct m_inode * inode, struct file * filp, char * buf, int count)
 	return (count-left)?(count-left):-ERROR;
 }
 
+/**
+ * 文件写函数
+ * 根据i节点和文件结构信息，将用户数据写入文件中。
+ * @param[in]	*inode		i节点指针
+ * @param[in]	*filp
+ * @param[in]	buf			指定用户态中缓冲区的位置
+ * @param[in]	count		需要写入的字节数
+ * @retval		成功返回实际写入的字节数，失败返回出错号(小于0)
+ */
 int file_write(struct m_inode * inode, struct file * filp, char * buf, int count)
 {
 	off_t pos;

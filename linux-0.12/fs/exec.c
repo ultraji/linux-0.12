@@ -7,6 +7,9 @@
 /*
  * #!-checking implemented by tytso.
  */
+ /*
+ * #!开始脚本程序的检测代码部分是由tytso实现的.
+ */
 
 /*
  * Demand-loading implemented 01.12.91 - no need to read anything but
@@ -15,6 +18,13 @@
  *
  * Once more I can proudly say that linux stood up to being changed: it
  * was less than 2 hours work to get demand-loading completely implemented.
+ */
+/*
+ * 需求时加载实现于1991.12.1 - 只需将执行文件头部读进内存而无须将整个执行文件都加载进内存。执行
+ * 文件的i节点被放在当前进程的可执行字段中"current->executable"，页异常会进行执行文件的实际加载
+ * 操作。这很完美。
+ *
+ * 我可再一次自豪地说，linux经得起修改：只用了不到2小时的工作就完全实现了需求加载处理。
  */
 
 #include <signal.h>
@@ -37,8 +47,19 @@ extern int sys_close(int fd);
  * and envelope for the new program. 32 should suffice, this gives
  * a maximum env+arg of 128kB !
  */
+/*
+ * MAX_ARG_PAGES定义了为新程序分配的给参数和环境变量使用的最大内存页数。32页内存应该足够了，这
+ * 使得环境和参数(env+arg)空间的总和达到128KB!
+ */
 #define MAX_ARG_PAGES 32
 
+/**
+ * 使用库文件 系统调用
+ * 为进程选择一个库文件，并替换进程当前库文件i节点字段值为这里指定库文件名的i节点指针。如果
+ * library指针为空，则把进程当前的库文件释放掉
+ * @param[in]	library		库文件名
+ * @retval		成功返回0，否则返回出错码
+ */
 int sys_uselib(const char * library)
 {
 	struct m_inode * inode;
@@ -65,6 +86,18 @@ int sys_uselib(const char * library)
  * create_tables() parses the env- and arg-strings in new user
  * memory and creates the pointer tables from them, and puts their
  * addresses on the "stack", returning the new stack pointer value.
+ */
+/*
+ * create_tables()函数在新任务内存中解析环境变量和参数字符串，由此创建指针表，并将它们的地址放
+ * 到"栈"上，然后返回新栈的指针值。
+ */
+
+/**
+ * 在新任务中创建参数和环境变量指针表
+ * @param[in]	p		数据段中参数和环境信息偏移指针
+ * @param[in]	argc	参数个数
+ * @param[in]	envc	环境变量个数.
+ * @retval		栈指针值
  */
 static unsigned long * create_tables(char * p,int argc,int envc)
 {
@@ -95,6 +128,16 @@ static unsigned long * create_tables(char * p,int argc,int envc)
 /*
  * count() counts the number of arguments/envelopes
  */
+/*
+ * count()函数计算命令行参数/环境变更的个数
+ */
+ 
+/**
+ * 计算参数个数
+ * 统计参数指针数组中指针的个数
+ * @param[in]	argv	参数指针数组(最后一个指针项是NULL)
+ * @retval		参数个数
+ */
 static int count(char ** argv)
 {
 	int i=0;
@@ -123,6 +166,35 @@ static int count(char ** argv)
  * We do this by playing games with the fs segment register.  Since it
  * it is expensive to load a segment register, we try to avoid calling
  * set_fs() unless we absolutely have to.
+ */
+/*
+ * 'copy_string()'函数从用户内存空间复制参数/环境字符串到内核空闲页面中。这些已具有直接放到新用
+ * 户内存中的格式。
+ *
+ * 由TYT(Tytso)于1991.11.24日修改，增加了from_kmem参数，该参数指明了字符串或字符串数组是来自用
+ * 户段还是内核段.
+ *
+ * from_kmem	 指针 argv *		字符串 argv **
+ *	  0 		 用户空间			用户空间
+ *	  1 		 内核空间			用户空间
+ *	  2 		 内核空间			内核空间
+ *
+ * 我们是通过巧妙处理fs段寄存器来操作的。由于加载一个段寄存器代价太高，所以我们尽量避免调用
+ * set_fs()，除非实在必要。
+ */
+
+/**
+ * 复制指定个数的参数字符串到参数和环境空间中
+ * @param[in]	argc		欲添加的参数个数
+ * @param[in]	argv		参数指针数组
+ * @param[in]	page		参数和环境空间页面指针数组
+ * @param[in]	p			参数表空间中偏移指针,始终指向已复制串的头部
+ * @param[in]	from_kmem	字符串来源标志。
+ * 在do_execve()函数中，p初始化为指向参数表(128KB)空间的最后一个长字处，参数字符串是以堆栈操作
+ * 方式逆向往其中复制存放的。因此p指针会随着复制信息的增加而逐渐减小，并始终指向参数字符串的头
+ * 部。字符串来源标志from_kmem应该是TYT为了给execve()增添执行脚本文件的功能而新加的参数。当没
+ * 有运行脚本文件的功能时，所有参数字符串都在用户数据空间中。
+ * @retval		参数和环境空间当前头部指针。若出错则返回0
  */
 static unsigned long copy_strings(int argc,char ** argv,unsigned long *page,
 		unsigned long p, int from_kmem)
@@ -174,7 +246,15 @@ static unsigned long copy_strings(int argc,char ** argv,unsigned long *page,
 	return p;
 }
 
-static unsigned long change_ldt(unsigned long text_size,unsigned long * page)
+
+/**
+ * 修改任务的局部描述符表内容
+ * 修改局部描述符表LDT中描述符的段基址和段限长，并将参数和环境空间页面放置在数据段末端。
+ * @param[in]	text_size	执行文件头部中a_text字段给出的代码段长度值
+ * @param[in]	page		参数和环境空间页面指针数组
+ * @retval		数据段限长值(64MB)
+ */
+static unsigned long change_ldt(unsigned long text_size, unsigned long * page)
 {
 	unsigned long code_limit,data_limit,code_base,data_base;
 	int i;
@@ -203,6 +283,21 @@ static unsigned long change_ldt(unsigned long text_size,unsigned long * page)
  *
  * NOTE! We leave 4MB free at the top of the data-area for a loadable
  * library.
+ */
+/*
+ * 'do_execve()'函数执行一个新程序.
+ */
+
+/**
+ * 加载并执行子进程(其他程序) 系统中断调用
+ * 该函数是系统中断调用(int 0x80)功能号__NR_execve调用的函数。函数的参数是进入系统调用处理过程
+ * 后直到调用本系统调用处理过程和调用本函数之前逐步压入栈中的值
+ * @param[in]	eip			调用系统中断的程序代码指针
+ * @param[in]	tmp			系统中断在调用sys_execve时的返回地址，无用
+ * @param[in]	filename	被执行程序文件名指针
+ * @param[in]	argv		命令行参数指针数组的指针
+ * @param[in]	envp		环境变更指针数组的指针
+ * @retval		如果调用成功，则不返回；否则设置出错号，并返回-1
  */
 int do_execve(unsigned long * eip,long tmp,char * filename,
 	char ** argv, char ** envp)

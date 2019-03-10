@@ -22,8 +22,8 @@
  * - setup:		该文件的8086机器码最长为4个磁盘扇区，用于设置系统参数。
  * - system:	实际系统的80386代码。
  * 
- * 该程序首先检查所有程序模块的类型是否正确，并将检查结果在终端上显示出来，然后删除模块头部
- * 并扩充到正确的长度。该程序也会将一些系统数据写到 stderr。
+ * 该程序首先检查所有程序模块的类型是否正确，并将检查结果在终端上显示出来，然后删除模块头部并扩
+ * 充到正确的长度。该程序也会将一些系统数据写到stderr。
  */
 /*
  * Changes by tytso to allow root device specification
@@ -32,7 +32,6 @@
  */
 /*
  * tytso对该程序作了修改，以允许指定根文件设备。
- * 
  * 添加了指定交换设备功能：Linus 20.12.91 
  */
 
@@ -58,7 +57,7 @@
 #define SYS_SIZE 		0x3000	/* system文件最长节数(SYS_SIZE*16=128KB) */
 
 // 默认地把Linux根文件系统所在的设备设置为在第2个硬盘的第1个分区上(即设备号为0x0306)，是因为
-// Linus当时开发Linux时，把第1个硬盘用作MINIX系统盘，而第2个硬盘用作Linux的根文件系统盘
+// Linus当时开发Linux时，把第1个硬盘用作MINIX系统盘，而第2个硬盘用作Linux的根文件系统盘。
 
 #define DEFAULT_MAJOR_ROOT 3	/* 默认根设备主设备号 - 3(硬盘) */
 #define DEFAULT_MINOR_ROOT 1//6	/* 默认根设备次设备号 - 6(第2个硬盘的第1分区) */
@@ -86,7 +85,7 @@ void usage(void)
 	die("Usage: build bootsect setup system [rootdev] [> image]");
 }
 
-/* 主程序开始 */
+/* 主程序 */
 int main(int argc, char ** argv)
 {
 	int i, c, id;

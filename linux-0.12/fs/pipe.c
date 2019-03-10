@@ -54,7 +54,14 @@ int read_pipe(struct m_inode * inode, char * buf, int count)
 	wake_up(& PIPE_WRITE_WAIT(*inode));
 	return read;
 }
-	
+
+
+/**
+ * 管道写操作
+ * @param[in]	inode		管道对应的i节点
+ * @param[in]	buf			数据缓冲区指针
+ * @param[in]	count		将写入管道的字节数
+ */
 int write_pipe(struct m_inode * inode, char * buf, int count)
 {
 	int chars, size, written = 0;
@@ -88,6 +95,13 @@ int write_pipe(struct m_inode * inode, char * buf, int count)
 	return written;
 }
 
+
+/**
+ * 创建管道 系统调用
+ * 在fildes所指的数组中创建一对句柄（描述符）。这对文件句柄指向一管道i节点。
+ * @param[in]	fildes		文件句柄数组。fildes[0]用于读管道，fildes[1]向管道写数据。
+ * @retval		成功时返回0，出错时返回-1
+ */
 int sys_pipe(unsigned long * fildes)
 {
 	struct m_inode * inode;

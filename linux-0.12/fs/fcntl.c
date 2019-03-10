@@ -64,7 +64,7 @@ int sys_dup2(unsigned int oldfd, unsigned int newfd)
  */
 int sys_dup(unsigned int fildes)
 {
-	return dupfd(fildes,0);
+	return dupfd(fildes, 0);
 }
 
 

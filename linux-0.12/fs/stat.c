@@ -12,6 +12,12 @@
 #include <linux/kernel.h>
 #include <asm/segment.h>
 
+/**
+ * 复制文件状态信息
+ * @param[in]		inode		文件i节点
+ * @param[in/out]	statbuf		用户数据空间中stat文件状态结构指针，用于存放取得的状态信息
+ * @retval			void
+ */
 static void cp_stat(struct m_inode * inode, struct stat * statbuf)
 {
 	struct stat tmp;
@@ -33,6 +39,14 @@ static void cp_stat(struct m_inode * inode, struct stat * statbuf)
 		put_fs_byte(((char *) &tmp)[i],i + (char *) statbuf);
 }
 
+
+/**
+ * 获取文件状态 系统调用
+ * 根据给定的文件名获取相关文件状态信息。
+ * @param[in]		filename	指定的文件名
+ * @param[in/out]	statbuf		存放状态信息的缓冲区指针
+ * @retval			成功返回0，若出错则返回出错码
+ */
 int sys_stat(char * filename, struct stat * statbuf)
 {
 	struct m_inode * inode;
@@ -44,6 +58,14 @@ int sys_stat(char * filename, struct stat * statbuf)
 	return 0;
 }
 
+
+/**
+ * 获取文件状态 系统调用
+ * 根据给定的文件名获取相关文件状态信息。文件路径名中有符号链接文件名，则取符号文件的状态。
+ * @param[in]		filename	指定的文件名
+ * @param[in/out]	statbuf		存放状态信息的缓冲区指针
+ * @retval			成功返回0，若出错则返回出错码
+ */
 int sys_lstat(char * filename, struct stat * statbuf)
 {
 	struct m_inode * inode;
@@ -55,6 +77,13 @@ int sys_lstat(char * filename, struct stat * statbuf)
 	return 0;
 }
 
+/**
+ * 获取文件状态 系统调用
+ * 根据给定的文件名获取相关文件状态信息。
+ * @param[in]		fd			指定文件的句柄
+ * @param[in/out]	statbuf		存放状态信息的缓冲区指针
+ * @retval			成功返回0，若出错则返回出错码
+ */
 int sys_fstat(unsigned int fd, struct stat * statbuf)
 {
 	struct file * f;
@@ -66,6 +95,15 @@ int sys_fstat(unsigned int fd, struct stat * statbuf)
 	return 0;
 }
 
+/**
+ * 符号链接文件 系统调用
+ * 该调用读取符号链接文件的内容（即该符号链接所指向文件的路径名字符串），并放到指定长度的用户缓
+ * 冲区中。若缓冲区太小，就会截断符号链接的内容。
+ * @param[in]		path	符号链接文件路径名
+ * @param[in/out]	buf		用户缓冲区
+ * @param[in]		bufsiz	缓冲区长度
+ * @retval			成功则返回放入缓冲区中的字符数；若失败则返回出错码
+*/
 int sys_readlink(const char * path, char * buf, int bufsiz)
 {
 	struct m_inode * inode;

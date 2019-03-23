@@ -107,16 +107,16 @@ static int sprintf(char * str, const char *fmt, ...)
  * bios-listing reading. Urghh.
  */
 /* 这段宏读取CMOS实时时钟数据。outb_p和inb_p是include/asm/io.h中定义的端口输入输出宏 */
-#define CMOS_READ(addr) ({ 		\
-	outb_p(0x80 | addr, 0x70); 	\
+#define CMOS_READ(addr) ({		\
+	outb_p(0x80 | addr, 0x70);	\
 	inb_p(0x71); 				\
 })
 
 /* 将BCD码转换成二进制数值 */
-#define BCD_TO_BIN(val) ((val)=((val)&15) + ((val)>>4)*10)
+#define BCD_TO_BIN(val)	((val)=((val)&15) + ((val)>>4)*10)
 
-/* CMOS的访问时间很慢。为了减小时间误差，在读取了下面循环中所有数值后，若此时CMOS中秒值发生了变
- 化，则重新读取。这样能控制误差在1s内 */
+/* CMOS的访问时间很慢。为了减小时间误差，在读取了下面循环中所有数值后，若此时CMOS中秒值
+ 发生了变化，则重新读取。这样能控制误差在1s内 */
 static void time_init(void)
 {
 	struct tm time;
@@ -168,17 +168,14 @@ void main(void)		/* This really is void, no error here. */
 /*
  * 此时中断还被禁止的，做完必要的设置后就将其开启。
  */
- 	ROOT_DEV = ORIG_ROOT_DEV;		/* ROOT_DEV 定义在 fs/super.c 中 */
- 	SWAP_DEV = ORIG_SWAP_DEV;		/* SWAP_DEV 定义在 mm/swap.c 中 */
+	ROOT_DEV = ORIG_ROOT_DEV;		/* ROOT_DEV定义在fs/super.c中 */
+	SWAP_DEV = ORIG_SWAP_DEV;		/* SWAP_DEV定义在mm/swap.c中 */
 	sprintf(term, "TERM=con%dx%d", CON_COLS, CON_ROWS);
 	envp[1] = term;
 	envp_rc[1] = term;
- 	drive_info = DRIVE_INFO;
+	drive_info = DRIVE_INFO;
 
-	/* 接着根据机器物理内存容量设置高速缓冲区和主内存区的位置和范围。
-	 高速缓冲末端地址 > buffer_memory_end
-	 机器内存容量  	> memory_end
-	 主内存开始地址   	> main_memory_start */
+	/* 根据机器物理内存容量设置高速缓冲区和主内存区的位置和范围 */
 	memory_end = (1<<20) + (EXT_MEM_K<<10); /* 1M + 扩展内存大小 */
 	memory_end &= 0xfffff000;				/* 忽略不到4K(1页)的内存数 */
 	if (memory_end > 16*1024*1024) {
@@ -205,11 +202,12 @@ void main(void)		/* This really is void, no error here. */
 	tty_init();								/* tty初始化 */
 	time_init();							/* 设置开机启动时间 */
 	sched_init();							/* 调度程序初始化 */
-	buffer_init(buffer_memory_end);			/* 缓冲管理初始化，建内存链表等 */
+	buffer_init(buffer_memory_end);			/* 缓冲管理初始化 */
 	hd_init();								/* 硬盘初始化 */
 	floppy_init();							/* 软驱初始化 */
+
 	sti();									/* 开启中断 */
-// 下面过程通过在堆栈中设置的参数，利用中断返回指令启动任务0执行。
+/* 下面过程通过在堆栈中设置的参数，利用中断返回指令启动任务0执行 */
 	move_to_user_mode();
 	if (!fork()) {							/* we count on this going ok */
 		init();

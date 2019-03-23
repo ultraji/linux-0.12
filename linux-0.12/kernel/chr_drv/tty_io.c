@@ -11,6 +11,13 @@
  * Kill-line thanks to John T Kohl, who also corrected VMIN = VTIME = 0.
  */
 
+/*
+ * 'tty_io.c'给tty终端一种非相关的感觉,不管它们是控制台还是串行终端.该程序同样实现了回显，规
+ * 范(熟)模式等.
+ * Kill-line，谢谢 John T Kohl。他同时还纠正了当 VMIN = VTIME = 0 时的问题。
+ */
+
+
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>
@@ -24,26 +31,27 @@
 #include <asm/system.h>
 
 int kill_pg(int pgrp, int sig, int priv);
+/* 判断一个进程组是否是孤儿进程 */
 int is_orphaned_pgrp(int pgrp);
 
-#define _L_FLAG(tty,f)	((tty)->termios.c_lflag & f)
-#define _I_FLAG(tty,f)	((tty)->termios.c_iflag & f)
-#define _O_FLAG(tty,f)	((tty)->termios.c_oflag & f)
+#define _L_FLAG(tty,f)  ((tty)->termios.c_lflag & f)
+#define _I_FLAG(tty,f)  ((tty)->termios.c_iflag & f)
+#define _O_FLAG(tty,f)  ((tty)->termios.c_oflag & f)
 
-#define L_CANON(tty)	_L_FLAG((tty),ICANON)
-#define L_ISIG(tty)	_L_FLAG((tty),ISIG)
-#define L_ECHO(tty)	_L_FLAG((tty),ECHO)
-#define L_ECHOE(tty)	_L_FLAG((tty),ECHOE)
-#define L_ECHOK(tty)	_L_FLAG((tty),ECHOK)
-#define L_ECHOCTL(tty)	_L_FLAG((tty),ECHOCTL)
-#define L_ECHOKE(tty)	_L_FLAG((tty),ECHOKE)
-#define L_TOSTOP(tty)	_L_FLAG((tty),TOSTOP)
+#define L_CANON(tty)    _L_FLAG((tty),ICANON)
+#define L_ISIG(tty)     _L_FLAG((tty),ISIG)
+#define L_ECHO(tty)     _L_FLAG((tty),ECHO)
+#define L_ECHOE(tty)    _L_FLAG((tty),ECHOE)
+#define L_ECHOK(tty)    _L_FLAG((tty),ECHOK)
+#define L_ECHOCTL(tty)  _L_FLAG((tty),ECHOCTL)
+#define L_ECHOKE(tty)   _L_FLAG((tty),ECHOKE)
+#define L_TOSTOP(tty)   _L_FLAG((tty),TOSTOP)
 
-#define I_UCLC(tty)	_I_FLAG((tty),IUCLC)
-#define I_NLCR(tty)	_I_FLAG((tty),INLCR)
-#define I_CRNL(tty)	_I_FLAG((tty),ICRNL)
-#define I_NOCR(tty)	_I_FLAG((tty),IGNCR)
-#define I_IXON(tty)	_I_FLAG((tty),IXON)
+#define I_UCLC(tty)     _I_FLAG((tty),IUCLC)
+#define I_NLCR(tty)     _I_FLAG((tty),INLCR)
+#define I_CRNL(tty)     _I_FLAG((tty),ICRNL)
+#define I_NOCR(tty)     _I_FLAG((tty),IGNCR)
+#define I_IXON(tty)     _I_FLAG((tty),IXON)
 
 #define O_POST(tty)	_O_FLAG((tty),OPOST)
 #define O_NLCR(tty)	_O_FLAG((tty),ONLCR)
@@ -403,30 +411,41 @@ void chr_dev_init(void)
 {
 }
 
+/* 
+ * tty终端初始化函数
+ * 初始化所有终端缓冲队列,初始化串口终端和控制台终端
+ * @param[in]	void
+ * @retval		void
+ */
 void tty_init(void)
 {
 	int i;
 
-	for (i=0 ; i < QUEUES ; i++)
-		tty_queues[i] = (struct tty_queue) {0,0,0,0,""};
-	rs_queues[0] = (struct tty_queue) {0x3f8,0,0,0,""};
-	rs_queues[1] = (struct tty_queue) {0x3f8,0,0,0,""};
-	rs_queues[3] = (struct tty_queue) {0x2f8,0,0,0,""};
-	rs_queues[4] = (struct tty_queue) {0x2f8,0,0,0,""};
-	for (i=0 ; i<256 ; i++) {
+	/* 初始化所有终端的缓冲队列结构，设置初值 */
+	for (i = 0; i < QUEUES; i++) {
+		tty_queues[i] = (struct tty_queue) {0, 0, 0, 0, ""};
+	}
+	/* 对于串行终端的读/写缓冲队列,将它们的data字段设置为串行端口基地址值.串口1是
+	 0x3f8,串口2是0x2f8 */
+	rs_queues[0] = (struct tty_queue) {0x3f8, 0, 0, 0, ""};
+	rs_queues[1] = (struct tty_queue) {0x3f8, 0, 0, 0, ""};
+	rs_queues[3] = (struct tty_queue) {0x2f8, 0, 0, 0, ""};
+	rs_queues[4] = (struct tty_queue) {0x2f8, 0, 0, 0, ""};
+	/* 初步设置所有终端的tty结构 */
+	for (i = 0; i < 256; i++) {
 		tty_table[i] =  (struct tty_struct) {
-		 	{0, 0, 0, 0, 0, INIT_C_CC},
+			{0, 0, 0, 0, 0, INIT_C_CC},
 			0, 0, 0, NULL, NULL, NULL, NULL
 		};
 	}
 	con_init();
-	for (i = 0 ; i<NR_CONSOLES ; i++) {
+	for (i = 0; i < NR_CONSOLES; i++) {
 		con_table[i] = (struct tty_struct) {
-		 	{ICRNL,		/* change incoming CR to NL */
-			OPOST|ONLCR,	/* change outgoing NL to CRNL */
+			{ICRNL,		/* change incoming CR to NL */ /* CR转NL */
+			OPOST|ONLCR,/* change outgoing NL to CRNL */ /* NL转CRNL */
 			0,
 			IXON | ISIG | ICANON | ECHO | ECHOCTL | ECHOKE,
-			0,		/* console termio */
+			0,			/* console termio */
 			INIT_C_CC},
 			0,			/* initial pgrp */
 			0,			/* initial session */
@@ -435,7 +454,7 @@ void tty_init(void)
 			con_queues+0+i*3,con_queues+1+i*3,con_queues+2+i*3
 		};
 	}
-	for (i = 0 ; i<NR_SERIALS ; i++) {
+	for (i = 0; i < NR_SERIALS; i++) {
 		rs_table[i] = (struct tty_struct) {
 			{0, /* no translation */
 			0,  /* no translation */
@@ -450,7 +469,8 @@ void tty_init(void)
 			rs_queues+0+i*3,rs_queues+1+i*3,rs_queues+2+i*3
 		};
 	}
-	for (i = 0 ; i<NR_PTYS ; i++) {
+	/* 初始化伪终端使用的tty结构 */
+	for (i = 0; i < NR_PTYS; i++) {
 		mpty_table[i] = (struct tty_struct) {
 			{0, /* no translation */
 			0,  /* no translation */
@@ -478,6 +498,8 @@ void tty_init(void)
 			spty_queues+0+i*3,spty_queues+1+i*3,spty_queues+2+i*3
 		};
 	}
+	/* 初始化串行中断处理程序和串行接口1和2（serial.c），并显示系统含有的虚拟控制台
+	 数NR_CONSOLES和伪终端数NR_PTYS。 */
 	rs_init();
 	printk("%d virtual consoles\n\r",NR_CONSOLES);
 	printk("%d pty's\n\r",NR_PTYS);

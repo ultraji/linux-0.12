@@ -43,8 +43,8 @@ static int skip_atoi(const char **s)
 /**
  * 除操作
  * @param[in/out]	n		被除数
- * @param[in]	base	除数
- * @retval		函数返回余数(同时，n为商) */
+ * @param[in]		base	除数
+ * @retval			函数返回余数(同时，n为商) */
 #define do_div(n, base) ({ 													\
 	int __res;																\
 	__asm__("divl %4"														\
@@ -65,52 +65,78 @@ static int skip_atoi(const char **s)
 static char * number(char * str, int num, int base, int size, int precision
 	,int type)
 {
-	char c,sign,tmp[36];
-	const char *digits="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	char c, sign, tmp[36];
+	const char *digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	int i;
 
-	if (type&SMALL) digits="0123456789abcdefghijklmnopqrstuvwxyz";
-	if (type&LEFT) type &= ~ZEROPAD;
-	if (base<2 || base>36)
+	if (type & SMALL) {	/* 小写字母集 */
+		digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+	}
+	if (type & LEFT) {	/* 左调整(靠左边界),则屏蔽类型中的填零标志 */
+		type &= ~ZEROPAD;
+	}
+	if (base < 2 || base > 36) {	/* 本程序只能处理基数在2-36之间的数 */
 		return 0;
-	c = (type & ZEROPAD) ? '0' : ' ' ;
+	}
+	c = (type & ZEROPAD) ? '0' : ' ';
 	if (type&SIGN && num<0) {
-		sign='-';
+		sign = '-';
 		num = -num;
-	} else
-		sign=(type&PLUS) ? '+' : ((type&SPACE) ? ' ' : 0);
-	if (sign) size--;
-	if (type&SPECIAL)
-		if (base==16) size -= 2;
-		else if (base==8) size--;
-	i=0;
-	if (num==0)
+	} else {
+		sign = (type&PLUS) ? '+' : ((type&SPACE) ? ' ' : 0);
+	}
+	if (sign){
+		size--;
+	}
+	if (type&SPECIAL) {
+		if (base==16) {
+			size -= 2;
+		} else if (base==8) {
+			size--;
+		}
+	}
+	i = 0;
+	if (num == 0) {
 		tmp[i++]='0';
-	else while (num!=0)
-		tmp[i++]=digits[do_div(num,base)];
-	if (i>precision) precision=i;
+	} else {
+		while (num != 0) {
+			tmp[i++] = digits[do_div(num, base)];
+		}
+	}
+	if (i > precision){
+		precision = i;
+	}
 	size -= precision;
-	if (!(type&(ZEROPAD+LEFT)))
-		while(size-->0)
+	if (!(type & (ZEROPAD+LEFT))) {
+		while(size-->0) {
 			*str++ = ' ';
-	if (sign)
+		}
+	}
+	if (sign) {
 		*str++ = sign;
-	if (type&SPECIAL)
-		if (base==8)
+	}
+	if (type & SPECIAL) {
+		if (base==8) {
 			*str++ = '0';
-		else if (base==16) {
-			*str++ = '0';
+		} else if (base==16) {
+			*str++ = '0'; 
 			*str++ = digits[33];
 		}
-	if (!(type&LEFT))
-		while(size-->0)
+	}
+	if (!(type&LEFT)) {
+		while(size-->0) {
 			*str++ = c;
-	while(i<precision--)
+		}
+	}
+	while(i<precision--) {
 		*str++ = '0';
-	while(i-->0)
+	}
+	while(i-->0) {
 		*str++ = tmp[i];
-	while(size-->0)
+	}
+	while(size-->0) {
 		*str++ = ' ';
+	}
 	return str;
 }
 

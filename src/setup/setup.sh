@@ -47,7 +47,7 @@ bochs_make_install(){
 bochs_install(){
     sudo apt-get install -y build-essential &> /dev/null
     sudo apt-get install -y bochs bochs-x bochs-sdl &> /dev/null \
-    && _echo_succ "bochs is installed" || _echo_err "bochs is not installed"
+    && _echo_succ "bochs is installed." || _echo_err "bochs is not installed!!!"
 }
 
 env_install(){
@@ -103,4 +103,7 @@ then
 elif [ "$1" ] && [ "$1" = "-e" ]
 then
     env_install
+else
+    env_install
+    bochs_install
 fi

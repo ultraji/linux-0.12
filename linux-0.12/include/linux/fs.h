@@ -139,8 +139,7 @@ struct m_inode {
 	unsigned char i_gid;
 	unsigned char i_nlinks;
 	unsigned short i_zone[9];
-	/* these are in memory also */
-	/* 以下是内存中特有的 */
+	/* these are in memory also */		/* 以下是内存中特有的 */
 	struct task_struct * i_wait;		/* 等待该i节点的进程 */
 	struct task_struct * i_wait2;		/* for pipes */
 	unsigned long i_atime;				/* 最后访问时间 */
@@ -175,8 +174,7 @@ struct super_block {
 	unsigned short s_log_zone_size;		/* log2(数据块数/逻辑块) */
 	unsigned long s_max_size;			/* 文件最大长度 */
 	unsigned short s_magic;				/* 文件系统魔数 */
-	/* These are only in memory */
-	/* 以下是内存中特有的 */
+	/* These are only in memory */		/* 以下是内存中特有的 */
 	struct buffer_head * s_imap[8];		/* i节点位图缓冲块指针数组(占用8块，可表示64M) */
 	struct buffer_head * s_zmap[8];		/* 逻辑块位图缓冲块指针数组(占用8块) */
 	unsigned short s_dev;				/* 超级块所在设备号 */

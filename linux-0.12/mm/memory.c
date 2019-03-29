@@ -817,7 +817,6 @@ void do_no_page(unsigned long error_code, unsigned long address)
 void mem_init(long start_mem, long end_mem)
 {
 	int i;
-
 	// 首先将 1MB 到 16MB 范围内所有内存页面对应的内存映射字节数组项置为已占用状态，即各项字节值
 	// 全部设置成 USED(100)。PAGING_PAGES 被定义为 (PAGING_MEMORY>>12)，即 1MB 以上所有物理内
 	// 存分页后的内存页面数(15MB/4KB = 3840)。(PAGING_MEMORY = 15M)

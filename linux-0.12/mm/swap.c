@@ -29,10 +29,6 @@
 // 当op=""时，就是指令bt - (Bit Test)测试并用原值设置进位位。
 // 当op="s"时，就是指令bts - (Bit Test and Set)设置比特位值并用原来设置进位位。
 // 当op="r"时，就是指令btr - (Bit Test and Reset)复位比特位值并原值设置进位位。
-// 输入：%0 - (返回值)；
-// 		%1 - 位偏移(nr)；
-// 		%2 - 基址(addr)；
-// 		%3 - 加操作寄存器初值(0)。
 // 内嵌汇编代码把基地址(%2)和比特偏移值(%1)所指定的比特位值先保存到进位标志CF中，然后设置(复
 // 位)该比特位。指令abcl是带进位位加，用于根据进位位CF设置操作数(%0)。如果CF=1则返回寄存器
 // 值=1，否则返回寄存器值=0。
@@ -46,7 +42,7 @@ static inline int name(char * addr, unsigned int nr) 	\
 	return __res; 										\
 }
 
-// 这里根据不同的op字符定义3个内嵌函数.
+/* 这里根据不同的op字符定义3个内嵌函数 */
 bitop(bit, "")				/* 定义内嵌函数bit(char * addr, unsigned int nr) */
 bitop(setbit, "s")			/* 定义内嵌函数setbit(char * addr, unsigned int nr) */
 bitop(clrbit, "r")			/* 定义内嵌函数clrbit(char * addr, unsigned int nr) */

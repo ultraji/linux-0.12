@@ -41,8 +41,8 @@
 // 睡眠等待队列中。而b_wait则是专门供等待指定缓冲块(即b_wait对应的缓冲块)的任务使用的等待队列头
 // 指针。
 //
-// NR_BUFFERS其值即是变量名nr_buffers，并且在include/linux/fs.h文件声明为全局变量。利用大写名称
-// 来隐含地表示nr_buffers是一个在初始化之后不再改变的"常量"。它将在buffer_init()中被设置。
+// NR_BUFFERS其值即是变量名nr_buffers，并且在include/linux/fs.h文件声明为全局变量。利用大写名
+// 称来隐含地表示nr_buffers是一个在初始化之后不再改变的"常量"。它将在buffer_init()中被设置。
 
 /* end是由编译时的连接程序ld生成，表明内核代码的末端 */
 extern int end;	

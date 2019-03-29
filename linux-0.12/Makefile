@@ -1,11 +1,10 @@
 #
-# if you want the ram-disk device, define this to be the
-# size in blocks.
+# if you want the ram-disk device, define this to be the size in blocks.
 #
 RAMDISK = #-DRAMDISK=512
 
 # -0: 使用16bit代码段　
-# -a: 开启与GNU as,ld部分兼容性选项
+# -a: 开启与GNU as，ld部分兼容性选项
 AS86	=as86 -0 -a
 
 # -0: 产生具有16bit魔数的头结构
@@ -14,22 +13,26 @@ LD86	=ld86 -0
 AS	=as --32 # 64位系统下编译需要加 --32
 LD	=ld
 
-# -s: 输出文件中省略所有的符号信息
+# -s(去除): 输出文件中省略所有的符号信息
+# -m elf_i386: 64位系统下链接需要加
 # -x: 删除所有局部符号
 # -M: 用于输出符号表
 # -e startup_32(新增): 指定入口
 # -Ttext 0(新增): 使`startup_32`标号对应的地址为`0x0`
-LDFLAGS	=-m elf_i386 -M -x -Ttext 0 -e startup_32 # -s # 64位系统下链接需要加 -m elf_i386
+LDFLAGS	=-m elf_i386 -M -x -Ttext 0 -e startup_32 # -s 
 
 CC	=gcc-3.4 $(RAMDISK)
 
+# -m32: 64位系统下需要加
+# -g: 生成调试信息
 # -Wall: 打印警告
 # -O: 对代码进行优化
 # -fstrength-reduce: 优化循环语句
 # -fomit-frame-pointer: 对无需帧指针的函数不要把帧指针保留在寄存器中
 # -fcombine-regs(去除): 不再被gcc支持
 # -mstring-insns(去除): Linus本人增加的选项(gcc中没有)
-CFLAGS	=-m32 -g -Wall -O -fstrength-reduce -fomit-frame-pointer # 64位系统下需要加 -m32
+# -fno-builtin(新增): 阻止gcc会把没有参数的printf优化成puts
+CFLAGS	=-m32 -g -Wall -O -fstrength-reduce -fomit-frame-pointer -fno-builtin 
 
 # -nostdinc: 不要去搜索标准头文件目录，即不使用标准头文件
 # -Iinclude: 通过-I指定在该项目的include文件夹中搜索
@@ -60,8 +63,6 @@ LIBS	=lib/lib.a
 all:	Image
 
 Image: boot/bootsect boot/setup tools/system tools/build
-	# 这样修改就可以保证开启gcc调试后，System文件不变大，build也就不会失败了。原先
-	# 代码为下面注释部分
 	cp -f tools/system system.tmp
 	strip system.tmp
 	objcopy -O binary -R .note -R .comment system.tmp tools/kernel
@@ -71,6 +72,8 @@ Image: boot/bootsect boot/setup tools/system tools/build
 	rm tools/kernel -f
 	sync
 
+# 上面的修改就可以保证开启gcc调试后，System文件不变大，build也就不会失败了(build对system大小有
+# 限制)。原先代码为下面注释部分
 #	tools/build boot/bootsect boot/setup tools/system $(ROOT_DEV) \
 #		$(SWAP_DEV) > Image
 #	sync

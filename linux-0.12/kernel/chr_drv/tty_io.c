@@ -501,6 +501,6 @@ void tty_init(void)
 	/* 初始化串行中断处理程序和串行接口1和2（serial.c），并显示系统含有的虚拟控制台
 	 数NR_CONSOLES和伪终端数NR_PTYS。 */
 	rs_init();
-	printk("%d virtual consoles\n\r",NR_CONSOLES);
-	printk("%d pty's\n\r",NR_PTYS);
+	printk("%d virtual consoles\n\r", NR_CONSOLES);
+	printk("%d pty's\n\r", NR_PTYS);
 }

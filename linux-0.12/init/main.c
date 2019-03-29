@@ -153,7 +153,7 @@ static char * envp_rc[] = { "HOME=/", NULL ,NULL };	/* 调用执行程序时的�
 static char * argv[] = { "-/bin/sh", NULL };
 static char * envp[] = { "HOME=/usr/root", NULL, NULL };
 
-// 用于存放硬盘参数表
+/* 用于存放硬盘参数表 */
 struct drive_info { char dummy[32]; } drive_info;
 
 // 内核初始化主程序。
@@ -177,8 +177,8 @@ void main(void)		/* This really is void, no error here. */
 
 	/* 根据机器物理内存容量设置高速缓冲区和主内存区的位置和范围 */
 	memory_end = (1<<20) + (EXT_MEM_K<<10); /* 1M + 扩展内存大小 */
-	memory_end &= 0xfffff000;				/* 忽略不到4K(1页)的内存数 */
-	if (memory_end > 16*1024*1024) {
+	memory_end &= 0xfffff000;				/* 忽略不到4K(1页)的内存 */
+	if (memory_end > 16*1024*1024) {		/* 最多管理16M内存 */
 		memory_end = 16*1024*1024;
 	}
 
@@ -189,12 +189,12 @@ void main(void)		/* This really is void, no error here. */
 	} else {
 		buffer_memory_end = 1*1024*1024;
 	}
-	main_memory_start = buffer_memory_end;	/* 主内存开始地址 = 高速缓冲区结束地址 */
+	main_memory_start = buffer_memory_end;
 #ifdef RAMDISK	/* 如果定义了虚拟盘，则主内存还得相应减少 */
 	main_memory_start += rd_init(main_memory_start, RAMDISK*1024);
 #endif
 
-// 以下是内核进行所有方面的初始化工程。
+/* 以下是内核进行所有方面的初始化工作 */
 	mem_init(main_memory_start, memory_end);/* 主内存区初始化 */
 	trap_init();							/* 陷阱门初始化 */
 	blk_dev_init();							/* 块设备初始化 */
@@ -220,21 +220,21 @@ void main(void)		/* This really is void, no error here. */
  * task can run, and if not we return here.
  */
 /*
- * 注意!! 对于任何其他的任务，“pause()”将意味着我们必须等待收到信号才会返回
- * 就绪态，但任务0是唯一例外的情况(参见“schedule()”)，因为任务 0 在任何空闲时
- * 间里都会被激活,因此对于任务0'pause()'仅意味着我们返回来查看是否有其他任务可
- * 以运行，如果没有的话，我们就在这里一直循环执行‘pause()’。
+ * 注意!! 对于任何其他的任务，“pause()”将意味着我们必须等待收到信号才会返回就绪态，但任务0
+ * 是唯一例外的情况(参见“schedule()”)，因为任务 0 在任何空闲时间里都会被激活,因此对于任务
+ * 0'pause()'仅意味着我们返回来查看是否有其他任务可以运行，如果没有的话，我们就在这里一直循
+ * 环执行‘pause()’。
  */
 
 	/* pause()系统调用会把任务0转换成可中断等待状态，再执行调度函数。但是调度函数发现系统中
 	 没有其他程序可以运行就会切换到任务0，而不依赖任务0的状态。*/
-	for(;;)
+	for(;;) {
 		__asm__("int $0x80"::"a" (__NR_pause));	/* 执行系统调用pause() */
+	}
 }
 
-/* printf改为printw，内核没有实现puts，gcc会把没有参数的printf优化成puts。 */
-/* 产生格式化信息并输出到标准输出设备stdout */
-static int printw(const char *fmt, ...)
+
+static int printf(const char *fmt, ...)
 {
 	va_list args;
 	int i;
@@ -261,9 +261,9 @@ void init(void)
 	(void) dup(0);		/* 复制句柄，产生句柄1号 -- stdout */
 	(void) dup(0);		/* 复制句柄，产生句柄2号 -- stderr */
 
-	printw("%d buffers = %d bytes buffer space\n\r", NR_BUFFERS,
+	printf("%d buffers = %d bytes buffer space\n\r", NR_BUFFERS,
 		NR_BUFFERS*BLOCK_SIZE);
-	printw("Free mem: %d bytes\n\r", memory_end - main_memory_start);
+	printf("Free mem: %d bytes\n\r", memory_end - main_memory_start);
 
 	// 下面通过fork()用于创建一个子进程(任务 2)。对于被创建的子进程，fork()将返回 0 值，对于
 	// 原进程则返回子进程的进程号 pid。
@@ -293,7 +293,7 @@ void init(void)
 	while (1) {
 		/* 如果出错，则显示“初始化创建子程序失败”信息并继续执行 */
 		if ((pid=fork())<0) {
-			printw("Fork failed in init\r\n");
+			printf("Fork failed in init\r\n");
 			continue;
 		}
 		/* 新的子进程，关闭句柄(0,1,2)，新创建一个会话并设置进程组号，然后重新打开/dev/tty0作
@@ -310,7 +310,7 @@ void init(void)
 		while (1)
 			if (pid == wait(&i))
 				break;
-		printw("\n\rchild %d died with code %04x\n\r",pid,i);
+		printf("\n\rchild %d died with code %04x\n\r",pid,i);
 		sync();				/* 同步操作，刷新缓冲区 */
 	}
 	_exit(0);	/* NOTE! _exit, not exit() */

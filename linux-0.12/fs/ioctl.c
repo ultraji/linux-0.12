@@ -31,7 +31,7 @@ static ioctl_ptr ioctl_table[]={
 	NULL};		/* named pipes */
 	
 /**
- * 输入输出控制函数 系统调用
+ * 输入输出控制 系统调用
  * 该函数首先判断参数给出的文件描述符是否有效。然后根据对应i节点中文件属性判断文件类型，并根据
  * 具体文件类型调用相关的处理函数。
  * @param[in]	fd		文件描述符
@@ -42,19 +42,24 @@ static ioctl_ptr ioctl_table[]={
 int sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
 {	
 	struct file * filp;
-	int dev,mode;
+	int dev, mode;
 
-	if (fd >= NR_OPEN || !(filp = current->filp[fd]))
+	if (fd >= NR_OPEN || !(filp = current->filp[fd])) {
 		return -EBADF;
-	if (filp->f_inode->i_pipe)
-		return (filp->f_mode&1)?pipe_ioctl(filp->f_inode,cmd,arg):-EBADF;
-	mode=filp->f_inode->i_mode;
-	if (!S_ISCHR(mode) && !S_ISBLK(mode))
+	}
+	if (filp->f_inode->i_pipe) {
+		return (filp->f_mode&1) ? pipe_ioctl(filp->f_inode,cmd,arg) : -EBADF;
+	}
+	mode = filp->f_inode->i_mode;
+	if (!S_ISCHR(mode) && !S_ISBLK(mode)) {
 		return -EINVAL;
+	}
 	dev = filp->f_inode->i_zone[0];
-	if (MAJOR(dev) >= NRDEVS)
+	if (MAJOR(dev) >= NRDEVS) {
 		return -ENODEV;
-	if (!ioctl_table[MAJOR(dev)])
+	}
+	if (!ioctl_table[MAJOR(dev)]) {
 		return -ENOTTY;
+	}
 	return ioctl_table[MAJOR(dev)](dev,cmd,arg);
 }

@@ -16,7 +16,7 @@
 extern int tty_read(unsigned minor,char * buf,int count);
 extern int tty_write(unsigned minor,char * buf,int count);
 
-typedef (*crw_ptr)(int rw,unsigned minor,char * buf,int count,off_t * pos);
+typedef (*crw_ptr)(int rw, unsigned minor, char * buf, int count, off_t * pos);
 
 
 /**
@@ -51,7 +51,6 @@ static int rw_tty(int rw,unsigned minor,char * buf,int count, off_t * pos)
 	return rw_ttyx(rw, current->tty, buf, count, pos);
 }
 
-
 /* 内存数据读写 */
 static int rw_ram(int rw,char * buf, int count, off_t *pos)
 {
@@ -76,18 +75,19 @@ static int rw_kmem(int rw,char * buf, int count, off_t * pos)
  * @param[in]	rw		读写命令
  * @param[in]	buf		缓冲区
  * @param[in]	count	读写字节数
- * @param[in]	post	端口地址
+ * @param[in]	pos		端口地址
  * @retval		实际读写的字节数
  */
 static int rw_port(int rw, char * buf, int count, off_t * pos)
 {
-	int i=*pos;
+	int i = *pos;
 
 	while (count-->0 && i<65536) {
-		if (rw==READ)
-			put_fs_byte(inb(i),buf++);
-		else
-			outb(get_fs_byte(buf++),i);
+		if (rw == READ) {
+			put_fs_byte(inb(i), buf++);
+		} else {
+			outb(get_fs_byte(buf++), i);
+		}
 		i++;
 	}
 	i -= *pos;

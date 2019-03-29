@@ -25,7 +25,7 @@ int read_pipe(struct m_inode * inode, char * buf, int count)
 	int chars, size, read = 0;
 
 	while (count > 0) {
-		while (!(size=PIPE_SIZE(*inode))) {
+		while (!(size = PIPE_SIZE(*inode))) {
 			wake_up(& PIPE_WRITE_WAIT(*inode));
 			if (inode->i_count != 2) { /* are there any writers? */
 				return read;
@@ -66,16 +66,16 @@ int write_pipe(struct m_inode * inode, char * buf, int count)
 {
 	int chars, size, written = 0;
 
-	while (count>0) {
-		while (!(size=(PAGE_SIZE-1)-PIPE_SIZE(*inode))) {
+	while (count > 0) {
+		while (!(size = (PAGE_SIZE-1) - PIPE_SIZE(*inode))) {
 			wake_up(& PIPE_READ_WAIT(*inode));
 			if (inode->i_count != 2) { /* no readers */
 				current->signal |= (1<<(SIGPIPE-1));
-				return written?written:-1;
+				return written ? written : -1;
 			}
 			sleep_on(& PIPE_WRITE_WAIT(*inode));
 		}
-		chars = PAGE_SIZE-PIPE_HEAD(*inode);
+		chars = PAGE_SIZE - PIPE_HEAD(*inode);
 		if (chars > count) {
 			chars = count;
 		}
@@ -88,7 +88,7 @@ int write_pipe(struct m_inode * inode, char * buf, int count)
 		PIPE_HEAD(*inode) += chars;
 		PIPE_HEAD(*inode) &= (PAGE_SIZE-1);
 		while (chars-->0) {
-			((char *)inode->i_size)[size++]=get_fs_byte(buf++);
+			((char *)inode->i_size)[size++] = get_fs_byte(buf++);
 		}
 	}
 	wake_up(& PIPE_READ_WAIT(*inode));
@@ -110,29 +110,29 @@ int sys_pipe(unsigned long * fildes)
 	int i, j;
 
 	j = 0;
-	for(i = 0; j<2 && i<NR_FILE; i ++) {
+	for(i = 0; j < 2 && i < NR_FILE; i ++) {
 		if (!file_table[i].f_count) {
-			(f[j++]=i+file_table)->f_count++;
+			(f[j++] = i + file_table)->f_count++;
 		}
 	}
-	if (j==1) {
-		f[0]->f_count=0;
+	if (j == 1) {
+		f[0]->f_count = 0;
 	}
-	if (j<2) {
+	if (j < 2) {
 		return -1;
 	}
-	j=0;
-	for(i=0;j<2 && i<NR_OPEN;i++) {
+	j = 0;
+	for(i = 0; j < 2 && i < NR_OPEN; i ++) {
 		if (!current->filp[i]) {
 			current->filp[ fd[j]=i ] = f[j];
 			j++;
 		}
 	}
-	if (j==1) {
+	if (j == 1) {
 		current->filp[fd[0]]=NULL;
 	}
-	if (j<2) {
-		f[0]->f_count=f[1]->f_count=0;
+	if (j < 2) {
+		f[0]->f_count = f[1]->f_count = 0;
 		return -1;
 	}
 	if (!(inode=get_pipe_inode())) {

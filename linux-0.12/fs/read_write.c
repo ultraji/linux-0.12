@@ -12,7 +12,7 @@
 #include <linux/sched.h>
 #include <asm/segment.h>
 
-#include <unistd.h>	/* import SEEK_SET,SEEK_CUR,SEEK_END | ultraji add */
+#include <unistd.h>		/*(新增) import SEEK_SET,SEEK_CUR,SEEK_END */
 
 extern int rw_char(int rw,int dev, char * buf, int count, off_t * pos);
 extern int read_pipe(struct m_inode * inode, char * buf, int count);
@@ -43,6 +43,8 @@ int sys_lseek(unsigned int fd, off_t offset, int origin)
 	if (file->f_inode->i_pipe) { /* 管道不能操作读写指针 */
 		return -ESPIPE;
 	}
+	/* SEEK_CUR，SEEK_END分支中对相加值判断，既可过滤offset为负数且绝对值比文件长度大的情况，
+	 又可以过滤相加超过文件所能支持的最大值(off_t数据类型溢出的情况) */
 	switch (origin) {
 		case SEEK_SET:	/* 从文件开始处 */
 			if (offset < 0) {
@@ -57,7 +59,7 @@ int sys_lseek(unsigned int fd, off_t offset, int origin)
 			file->f_pos += offset;
 			break;
 		case SEEK_END:	/* 从文件尾处 */
-			if ((tmp=file->f_inode->i_size+offset) < 0) {
+			if ((tmp = file->f_inode->i_size + offset) < 0) {
 				return -EINVAL;
 			}
 			file->f_pos = tmp;
@@ -80,20 +82,22 @@ int sys_read(unsigned int fd, char * buf, int count)
 	struct file * file;
 	struct m_inode * inode;
 
-	if (fd>=NR_OPEN || count<0 || !(file=current->filp[fd]))
+	if (fd >= NR_OPEN || count < 0 || !(file = current->filp[fd])) {
 		return -EINVAL;
+	}
 	if (!count) {
 		return 0;
 	}
-	verify_area(buf, count); /* 验证存放数据的缓冲区内存限制 */
+	verify_area(buf, count); 		/* 验证存放数据的缓冲区内存限制 */
+	/* 根据文件类型执行相应的读操作 */
 	inode = file->f_inode;
-	if (inode->i_pipe) { /* 管道文件的读操作 */
+	if (inode->i_pipe) { 			/* 管道文件的读操作 */
 		return (file->f_mode & 1) ? read_pipe(inode, buf, count) : -EIO;
 	}
-	if (S_ISCHR(inode->i_mode)) { /* 字符设备的读操作 */
+	if (S_ISCHR(inode->i_mode)) { 	/* 字符设备的读操作 */
 		return rw_char(READ, inode->i_zone[0], buf, count, &file->f_pos);
 	}
-	if (S_ISBLK(inode->i_mode)) { /* 块设备的读操作 */
+	if (S_ISBLK(inode->i_mode)) { 	/* 块设备的读操作 */
 		return block_read(inode->i_zone[0], &file->f_pos, buf, count);
 	}
 	/* 目录文件或常规文件 */
@@ -106,14 +110,14 @@ int sys_read(unsigned int fd, char * buf, int count)
 		}
 		return file_read(inode, file, buf, count);
 	}
-	/* 执行到这，说明无法判断文件属性 */
-	printk("(Read)inode->i_mode=%06o\n\r",inode->i_mode);
+	/* 如果执行到这，说明无法判断文件类型 */
+	printk("(Read)inode->i_mode=%06o\n\r", inode->i_mode);
 	return -EINVAL;
 }
 
 
 /**
- * 写文件系统调用
+ * 写文件 系统调用
  * @param[in]	fd		文件句柄
  * @param[in]	buf		用户缓冲区
  * @param[in]	count	欲写字节数
@@ -124,26 +128,29 @@ int sys_write(unsigned int fd, char * buf, int count)
 	struct file * file;
 	struct m_inode * inode;
 	
-	if (fd>=NR_OPEN || count<0 || !(file=current->filp[fd])) {
+	if (fd >= NR_OPEN || count < 0 || !(file = current->filp[fd])) {
 		return -EINVAL;
 	}
 	if (!count) {
 		return 0;
 	}
-	inode=file->f_inode;
-	if (inode->i_pipe) { /* 管道的写操作 */
-		return (file->f_mode&2) ? write_pipe(inode, buf, count) : -EIO;
+
+	/* 根据文件类型执行相应的写操作 */
+	inode = file->f_inode;
+	if (inode->i_pipe) { 			/* 管道的写操作 */
+		/* file->f_mode & 2 即是否有写的权限 */
+		return (file->f_mode & 2) ? write_pipe(inode, buf, count) : -EIO;
 	}
-	if (S_ISCHR(inode->i_mode)) { /* 字符设备的写操作 */
+	if (S_ISCHR(inode->i_mode)) { 	/* 字符设备的写操作 */
 		return rw_char(WRITE, inode->i_zone[0], buf, count, &file->f_pos);
 	}
-	if (S_ISBLK(inode->i_mode)) { /* 块设备的写操作 */
+	if (S_ISBLK(inode->i_mode)) { 	/* 块设备的写操作 */
 		return block_write(inode->i_zone[0], &file->f_pos, buf, count);
 	}
-	if (S_ISREG(inode->i_mode)) { /* 文件的写操作 */
+	if (S_ISREG(inode->i_mode)) { 	/* 文件的写操作 */
 		return file_write(inode, file, buf, count);
 	}
-	/* 执行到这，说明无法判断文件属性 */
+	/* 如果执行到这，说明无法判断文件类型 */
 	printk("(Write)inode->i_mode=%06o\n\r", inode->i_mode);
 	return -EINVAL;
 }

@@ -67,9 +67,7 @@ unsigned long HIGH_MEMORY = 0;/* 全局变量，存放实际物理内存最高�
 		__asm__("cld ; rep ; movsl"::"S" (from),"D" (to),"c" (1024))
 
 
-// 内存映射字节图(1字节代表1页内存)。每个页面对应的字节用于标志页面当前被引用(占用)次数。它最大
-// 可以映射15MB的内存空间。在初始化函数 mem_init() 中，对于不能用作主内存区页面的位置均都参选被
-// 设置成USED(100)。
+/* 内存映射字节图(1字节代表1页内存) */
 unsigned char mem_map [ PAGING_PAGES ] = {0, };
 
 /*
@@ -495,9 +493,12 @@ void do_wp_page(unsigned long error_code, unsigned long address)
 
 }
 
-// 写页面验证
-// 若页面不可写，则复制页面。在fork.c中被内存验证通用函数verify_area()调用。
-// 参数address是指定页面在4GB空间中的线性地址。
+/**
+ * 写页面验证
+ * 若页面不可写，则复制页面。在fork.c中被内存验证通用函数verify_area()调用
+ * @param[in]	address		指定页面在4GB空间中的线性地址
+ * @retval		void
+ */
 void write_verify(unsigned long address)
 {
 	unsigned long page;

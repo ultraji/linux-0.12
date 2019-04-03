@@ -31,49 +31,49 @@ pg_dir: # 页目录将会存放在这里.
 # 姑且称为系统栈.但在移动到任务0执行(init/main.c中)以后该栈就被用作任务0和任务1共同使用的用户栈了.
 .globl startup_32
 startup_32:
-	# 对于GNU汇编, 每个直接操作数要以'$'开始, 否则表示地址。
-	# 每个寄存器名都要以'$'开头,eax表示是32位的ax寄存器。
-	movl $0x10, %eax
-	mov %ax, %ds
-	mov %ax, %es
-	mov %ax, %fs
-	mov %ax, %gs
-	lss stack_start, %esp		# 表示stack_start->ss:esp,设置系统堆栈.stack_start定义在
-								# kernel/sched.c中.
-	call setup_idt				# 调用设置中断描述符表子程序.
-	call setup_gdt				# 调用设置全局描述符表子程序.
-	movl $0x10, %eax			# reload all the segment registers
-	mov %ax, %ds				# after changing gdt. CS was already
-	mov %ax, %es				# reloaded in 'setup_gdt'
-	mov %ax, %fs				# 因为修改了gdt,所以需要重新装载所有的段寄存器.CS代码段寄存器已
-								# 经在setup_gdt中重新加载过了.
-	mov %ax, %gs
+    # 对于GNU汇编, 每个直接操作数要以'$'开始, 否则表示地址。
+    # 每个寄存器名都要以'$'开头,eax表示是32位的ax寄存器。
+    movl $0x10, %eax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+    lss stack_start, %esp   # 表示stack_start->ss:esp,设置系统堆栈.stack_start定义在
+                            # kernel/sched.c中.
+    call setup_idt          # 调用设置中断描述符表子程序.
+    call setup_gdt          # 调用设置全局描述符表子程序.
+    movl $0x10, %eax        # reload all the segment registers
+    mov %ax, %ds            # after changing gdt. CS was already
+    mov %ax, %es            # reloaded in 'setup_gdt'
+    mov %ax, %fs            # 因为修改了gdt,所以需要重新装载所有的段寄存器.CS代码段寄存器已
+                            # 经在setup_gdt中重新加载过了.
+    mov %ax, %gs
 
-	# 由于段描述符中的段限长从setup.s中的8MB改成了本程序设置的16MB,因此这里再次对所有段寄存器执行加
-	# 载操作是必须的.另外,通过使用bochs跟踪观察,如果不对CS再次执行加载,那么在执行到
-	# movl $0x10,%eax时CS代码段不可见部分中的限长还是8MB.这样看来应该重新加载CS.但是由于setup.s中
-	# 的内核代码段描述符与本程序中重新设置的代码段描述符除了段限长以外其余部分完全一样,8MB的限长在内核
-	# 初始化阶段不会有问题,而且在以后内核执行过程中段间跳转时会重新加载CS.因此这里没有加载它并没有让程
-	# 序出错.针对该问题,目前内核中就在call setup_gdt之后添加了一条长跳转指
-	# 令:'ljmp $(__KERNEL_CS),$1f',跳转到movl $0x10,$eax来确保CS确实被重新加载.
+    # 由于段描述符中的段限长从setup.s中的8MB改成了本程序设置的16MB,因此这里再次对所有段寄存器执行加
+    # 载操作是必须的.另外,通过使用bochs跟踪观察,如果不对CS再次执行加载,那么在执行到
+    # movl $0x10,%eax时CS代码段不可见部分中的限长还是8MB.这样看来应该重新加载CS.但是由于setup.s中
+    # 的内核代码段描述符与本程序中重新设置的代码段描述符除了段限长以外其余部分完全一样,8MB的限长在内核
+    # 初始化阶段不会有问题,而且在以后内核执行过程中段间跳转时会重新加载CS.因此这里没有加载它并没有让程
+    # 序出错.针对该问题,目前内核中就在call setup_gdt之后添加了一条长跳转指
+    # 令:'ljmp $(__KERNEL_CS),$1f',跳转到movl $0x10,$eax来确保CS确实被重新加载.
 
-	lss stack_start, %esp
+    lss stack_start, %esp
 
-	 # 下面代码用于测试A20地址线是否已经开启.采用的方法是向内存地址0x000000处写入任意一个数值,然后看
-	 # 内存地址0x100000(1M)处是否也是这个数值.如果一直相同的话,就一直比较下去,即死循环,死机.表示地
-	 # 址A20线没有选通,结果内核就不能使用1MB以上内存.
-	xorl %eax, %eax
-1:	incl %eax						# check that A20 really IS enabled
-	 # '1:'是一个局部符号构成的标号.标号由符号后跟一个冒号组成.此时该符号表示活动位置计数的当前值,并
-	 # 可以作为指令的操作数.局部符号用于帮助编译器和编程人员临时使用一些名称.共有10个局部符号名,可在
-	 # 整个程序中重复使用.这些符号名使用名称'0','1',...,'9'来引用.为了定义一个局部符号,需把标号写
-	 # 成'N:'形式(其中N表示一个数字).为了引用先前最近定义的这个符号,需要写成'Nb',其中N是定义标号时
-	 # 使用的数字.为了引用一个局部标号的下一个定义,而要与成'Nf',这里N是10个前向引用之一.上面'b'表
-	 # 示"向后(backwards)",'f'表示"向前(forwards)".在汇编程序的某一处,我们最大可以向后/向前引
-	 # 用10个标号.
-	movl %eax, 0x000000				# loop forever if it isn't
-	cmpl %eax, 0x100000
-	je 1b							# '1b'表示向后跳转到标号1去.若是'5f'则表示向前跳转到标号5去.
+    # 下面代码用于测试A20地址线是否已经开启.采用的方法是向内存地址0x000000处写入任意一个数值,然后看
+    # 内存地址0x100000(1M)处是否也是这个数值.如果一直相同的话,就一直比较下去,即死循环,死机.表示地
+    # 址A20线没有选通,结果内核就不能使用1MB以上内存.
+    xorl %eax, %eax
+1:	incl %eax               # check that A20 really IS enabled
+    # '1:'是一个局部符号构成的标号.标号由符号后跟一个冒号组成.此时该符号表示活动位置计数的当前值,并
+    # 可以作为指令的操作数.局部符号用于帮助编译器和编程人员临时使用一些名称.共有10个局部符号名,可在
+    # 整个程序中重复使用.这些符号名使用名称'0','1',...,'9'来引用.为了定义一个局部符号,需把标号写
+    # 成'N:'形式(其中N表示一个数字).为了引用先前最近定义的这个符号,需要写成'Nb',其中N是定义标号时
+    # 使用的数字.为了引用一个局部标号的下一个定义,而要与成'Nf',这里N是10个前向引用之一.上面'b'表
+    # 示"向后(backwards)",'f'表示"向前(forwards)".在汇编程序的某一处,我们最大可以向后/向前引
+    # 用10个标号.
+    movl %eax, 0x000000     # loop forever if it isn't
+    cmpl %eax, 0x100000
+    je 1b                   # '1b'表示向后跳转到标号1去.若是'5f'则表示向前跳转到标号5去.
 /*
  * NOTE! 486 should set bit 16, to check for write-protect in supervisor
  * mode. Then it would be unnecessary with the "verify_area()"-calls.
@@ -91,13 +91,13 @@ startup_32:
  # 协处理器指令,如果出错的话则说明协处理器芯片不存在,需要设置CR0中的协处理器仿真位EM(位2),并复位协处理器
  # 存在标志MP(位1).
 
-	movl %cr0, %eax						# check math chip
-	andl $0x80000011, %eax				# Save PG,PE,ET
-	/* "orl $0x10020,%eax" here for 486 might be good */
-	orl $2, %eax						# set MP
-	movl %eax, %cr0
-	call check_x87
-	jmp after_page_tables
+    movl %cr0, %eax						# check math chip
+    andl $0x80000011, %eax				# Save PG,PE,ET
+    /* "orl $0x10020,%eax" here for 486 might be good */
+    orl $2, %eax						# set MP
+    movl %eax, %cr0
+    call check_x87
+    jmp after_page_tables
 
 /*
  * We depend on ET to be correct. This checks for 287/387.
@@ -113,14 +113,14 @@ startup_32:
 # 态字低字节肯定为0.
 
 check_x87:
-	fninit								# 向协处理器发出初始化命令.
-	fstsw %ax							# 取协处理器状态字到ax寄存器中.
-	cmpb $0, %al						# 初始化状态字应该为0,否则说明协处理器不存在.
-	je 1f								/* no coprocessor: have to set bits */
-	movl %cr0, %eax						# 如果存在则向前跳转到标号1处,否则改写cr0.
-	xorl $6, %eax						/* reset MP, set EM */
-	movl %eax, %cr0
-	ret
+    fninit								# 向协处理器发出初始化命令.
+    fstsw %ax							# 取协处理器状态字到ax寄存器中.
+    cmpb $0, %al						# 初始化状态字应该为0,否则说明协处理器不存在.
+    je 1f								/* no coprocessor: have to set bits */
+    movl %cr0, %eax						# 如果存在则向前跳转到标号1处,否则改写cr0.
+    xorl $6, %eax						/* reset MP, set EM */
+    movl %eax, %cr0
+    ret
 
 # 下面是一个汇编语言指示符.其含义是指存储边界对齐调整."2"表示把随后的代码或数据的偏移位置调整到地址值
 # 最后2位为零的位置(2^2)，即按4字节方式对齐内存地址.不过现在GNU as直接写出对齐的值而非2的次方值了。
@@ -130,7 +130,7 @@ check_x87:
 
 .align 2
 1:	.byte 0xDB,0xE4		/* fsetpm for 287, ignored by 387 */	# 287协处理器码.
-	ret
+    ret
 
 /*
  *  setup_idt
@@ -154,23 +154,23 @@ check_x87:
 # 的初始化过程中会替换安装那些真正实用的中断描述符项。
 
 setup_idt:
-	lea ignore_int, %edx		# 将ignore_int的有效地址(偏移值)值->eax寄存器
-	movl $0x00080000, %eax		# 将选择符0x0008置入eax的高16位中.
-	movw %dx, %ax				/* selector = 0x0008 = cs */			
-								# 偏移值的低16位置入eax的低16位中.此时eax含有门描述符低4字节的值。
-	movw $0x8E00, %dx			/* interrupt gate - dpl=0, present */	
-								# 此时edx含有门描述符高4字节的值.
+    lea ignore_int, %edx		# 将ignore_int的有效地址(偏移值)值->eax寄存器
+    movl $0x00080000, %eax		# 将选择符0x0008置入eax的高16位中.
+    movw %dx, %ax				/* selector = 0x0008 = cs */			
+                                # 偏移值的低16位置入eax的低16位中.此时eax含有门描述符低4字节的值。
+    movw $0x8E00, %dx			/* interrupt gate - dpl=0, present */	
+                                # 此时edx含有门描述符高4字节的值.
 
-	lea idt, %edi				# idt是中断描述符表的地址.
-	mov $256, %ecx
+    lea idt, %edi				# idt是中断描述符表的地址.
+    mov $256, %ecx
 rp_sidt:
-	movl %eax, (%edi)			# 将哑中断门描述符存入表中.
-	movl %edx, 4(%edi)
-	addl $8, %edi				# edi指向表中下一项.
-	dec %ecx
-	jne rp_sidt
-	lidt idt_descr				# 加载中断描述符表寄存器值.
-	ret
+    movl %eax, (%edi)			# 将哑中断门描述符存入表中.
+    movl %edx, 4(%edi)
+    addl $8, %edi				# edi指向表中下一项.
+    dec %ecx
+    jne rp_sidt
+    lidt idt_descr				# 加载中断描述符表寄存器值.
+    ret
 
 /*
  *  setup_gdt
@@ -188,8 +188,8 @@ rp_sidt:
  *
  */
 setup_gdt:
-	lgdt gdt_descr	# 加载全局描述符表寄存器(内容已设置好)
-	ret
+    lgdt gdt_descr	# 加载全局描述符表寄存器(内容已设置好)
+    ret
 
 /*
  * I put the kernel page tables right after the page directory,
@@ -231,7 +231,7 @@ pg3:
  */
 
 tmp_floppy_area:
-	.fill 1024,1,0			# 共保留1024项,每项1B,填充数值0.
+    .fill 1024,1,0			# 共保留1024项,每项1B,填充数值0.
 
  # 下面这几个入栈操作用于为跳转到init/main.c中的main()函数作准备工作.pushl $L6指令在栈中压入返回
  # 地址,而pushl $main则压入了main()函数代码的地址.当head.s最后执行ret指令时就会弹出main()的地址,
@@ -239,48 +239,48 @@ tmp_floppy_area:
  # 前面3个入栈0值应该分别表示envp,argv指针和argc的值,但main()没有用到.
 
 after_page_tables:
-	pushl $0						# These are the parameters to main :-)
-	pushl $0						# 这些是调用main程序的参数(指init/main.c).
-	pushl $0						# 其中的'$'符号表示这是一个立即操作数.
-	pushl $L6						# return address for main, if it decides to.
-	pushl $main						# 'main'是编译程序对main的内部表示方法.
-	jmp setup_paging				# 跳转至setup_paging
+    pushl $0						# These are the parameters to main :-)
+    pushl $0						# 这些是调用main程序的参数(指init/main.c).
+    pushl $0						# 其中的'$'符号表示这是一个立即操作数.
+    pushl $L6						# return address for main, if it decides to.
+    pushl $main						# 'main'是编译程序对main的内部表示方法.
+    jmp setup_paging				# 跳转至setup_paging
 L6:
-	jmp L6							# main should never return here, but
-									# just in case, we know what happens.
-									# main程序绝对不应该返回到这里.不过为了以防万一,所以添加了
-									# 该语句.这样我们就知道发生什么问题了.
+    jmp L6							# main should never return here, but
+                                    # just in case, we know what happens.
+                                    # main程序绝对不应该返回到这里.不过为了以防万一,所以添加了
+                                    # 该语句.这样我们就知道发生什么问题了.
 
 /* This is the default interrupt "handler" :-) */
 /* 下面是默认的中断"向量句柄" */
 
 int_msg:
-	.asciz "Unknown interrupt\n\r"	# 定义字符串"末知中断(回车换行)".
+    .asciz "Unknown interrupt\n\r"	# 定义字符串"末知中断(回车换行)".
 
 .align 2							# 按4字节方式对齐内存地址.
 ignore_int:
-	pushl %eax
-	pushl %ecx
-	pushl %edx
-	push %ds						# 这里请注意!!ds,es,fs,gs等虽然是16位寄存器,但入栈后仍然
-									# 会以32位的形式入栈,即需要占用4个字节的堆栈空间.
-	push %es
-	push %fs
-	movl $0x10, %eax				# 设置段选择符(使ds,es,fs指向gdt表中的数据段).
-	mov %ax, %ds
-	mov %ax, %es
-	mov %ax, %fs
-	pushl $int_msg					# 把调用printk函数的参数指针(地址)入栈.注意!若int_msg前不
-									# 加'$',则表示把int_msg符处的长字('Unkn')入栈.
-	call printk						# 该函数在/kernel/printk.c中.
-	popl %eax
-	pop %fs
-	pop %es
-	pop %ds
-	popl %edx
-	popl %ecx
-	popl %eax
-	iret							# 中断返回(把中断调用时压入栈的CPU标志寄存器(32位)值也弹出).
+    pushl %eax
+    pushl %ecx
+    pushl %edx
+    push %ds						# 这里请注意!!ds,es,fs,gs等虽然是16位寄存器,但入栈后仍然
+                                    # 会以32位的形式入栈,即需要占用4个字节的堆栈空间.
+    push %es
+    push %fs
+    movl $0x10, %eax				# 设置段选择符(使ds,es,fs指向gdt表中的数据段).
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    pushl $int_msg					# 把调用printk函数的参数指针(地址)入栈.注意!若int_msg前不
+                                    # 加'$',则表示把int_msg符处的长字('Unkn')入栈.
+    call printk						# 该函数在/kernel/printk.c中.
+    popl %eax
+    pop %fs
+    pop %es
+    pop %ds
+    popl %edx
+    popl %ecx
+    popl %eax
+    iret							# 中断返回(把中断调用时压入栈的CPU标志寄存器(32位)值也弹出).
 
 
 /*
@@ -327,46 +327,46 @@ ignore_int:
 
 .align 2								# 按4字节方式对齐内存地址边界.
 setup_paging:							# 首先对5页内存(1页目录+4页页表)清零.
-	movl $1024 * 5, %ecx				/* 5 pages - pg_dir+4 page tables */
-	xorl %eax, %eax
-	xorl %edi, %edi						/* pg_dir is at 0x000 */	
-										# 页目录从0x0000地址开始
-	cld;rep;stosl						# eax内容存到es:edi所指内存位置处,且edi增4.
+    movl $1024 * 5, %ecx				/* 5 pages - pg_dir+4 page tables */
+    xorl %eax, %eax
+    xorl %edi, %edi						/* pg_dir is at 0x000 */	
+                                        # 页目录从0x0000地址开始
+    cld;rep;stosl						# eax内容存到es:edi所指内存位置处,且edi增4.
 
-	 # 下面4句设置页目录表中的项,因为我们(内核)共有4个页表所以只需设置4项.
-	 # 页目录项的结构与页表项的结构一样,4个字节为1项.
-	 # 例如"$pg0+7"表示:0x00001007,是页目录表中的第1项.
-	 # 则第1个页表所在的地址=0x00001007 & 0xfffff000=0x1000;
-	 # 第1个页表的属性标志=0x00001007 & 0x00000fff = 0x07,表示该页存在,用户可读写.
-	movl $pg0 + 7, pg_dir				/* set present bit/user r/w */
-	movl $pg1 + 7, pg_dir + 4			/*  --------- " " --------- */
-	movl $pg2 + 7, pg_dir + 8			/*  --------- " " --------- */
-	movl $pg3 + 7, pg_dir + 12			/*  --------- " " --------- */
+     # 下面4句设置页目录表中的项,因为我们(内核)共有4个页表所以只需设置4项.
+     # 页目录项的结构与页表项的结构一样,4个字节为1项.
+     # 例如"$pg0+7"表示:0x00001007,是页目录表中的第1项.
+     # 则第1个页表所在的地址=0x00001007 & 0xfffff000=0x1000;
+     # 第1个页表的属性标志=0x00001007 & 0x00000fff = 0x07,表示该页存在,用户可读写.
+    movl $pg0 + 7, pg_dir				/* set present bit/user r/w */
+    movl $pg1 + 7, pg_dir + 4			/*  --------- " " --------- */
+    movl $pg2 + 7, pg_dir + 8			/*  --------- " " --------- */
+    movl $pg3 + 7, pg_dir + 12			/*  --------- " " --------- */
 
-	 # 下面6行填写4个页表中所有项的内容,共有:4(页表)*1024(项/页表)=4096项(0-0xfff),即能映射物理
-	 # 内存4096*4KB = 16MB.
-	 # 每项的内容是:当前项所映射的物理内存地址 + 该页的标志(这里均为7).
-	 # 使用的方法是从最后一个页表的最后一项开始按倒退顺序填写.一个页表的最后一项在页表中的位置
-	 # 是1023*4 = 4092.因此最后一页的最后一项的位置就是$pg3+4092.
+     # 下面6行填写4个页表中所有项的内容,共有:4(页表)*1024(项/页表)=4096项(0-0xfff),即能映射物理
+     # 内存4096*4KB = 16MB.
+     # 每项的内容是:当前项所映射的物理内存地址 + 该页的标志(这里均为7).
+     # 使用的方法是从最后一个页表的最后一项开始按倒退顺序填写.一个页表的最后一项在页表中的位置
+     # 是1023*4 = 4092.因此最后一页的最后一项的位置就是$pg3+4092.
 
-	movl $pg3 + 4092, %edi			# edi->最后一页的最后一项.
-	movl $0xfff007, %eax			/*  16Mb - 4096 + 7 (r/w user,p) */
-									# 最后一项对应物理内存页的地址是0xfff000,加上属性
-									# 标志7,即为xfff007.
-	std								# 方向位置位,edi值递减(4字节).
+    movl $pg3 + 4092, %edi			# edi->最后一页的最后一项.
+    movl $0xfff007, %eax			/*  16Mb - 4096 + 7 (r/w user,p) */
+                                    # 最后一项对应物理内存页的地址是0xfff000,加上属性
+                                    # 标志7,即为xfff007.
+    std								# 方向位置位,edi值递减(4字节).
 1:	stosl							/* fill pages backwards - more efficient :-) */
-	subl $0x1000, %eax				# 每填好一项,物理地址值减0x1000.
-	jge 1b							# 如果小于0则说明全填写好了.
-	cld
-	 # 设置页目录表基地址寄存器cr3的值,指向页目录表.cr3中保存的是页目录表的物理地址.
-	xorl %eax, %eax						/* pg_dir is at 0x0000 */		
-										# 页目录表在0x0000处.
-	movl %eax, %cr3						/* cr3 - page directory start */
-	# 设置启动使用分页处理(cr0的PG标志,位31)
-	movl %cr0, %eax
-	orl $0x80000000, %eax			# 添上PG标志.
-	movl %eax, %cr0					/* set paging (PG) bit */
-	ret								/* this also flushes prefetch-queue */
+    subl $0x1000, %eax				# 每填好一项,物理地址值减0x1000.
+    jge 1b							# 如果小于0则说明全填写好了.
+    cld
+     # 设置页目录表基地址寄存器cr3的值,指向页目录表.cr3中保存的是页目录表的物理地址.
+    xorl %eax, %eax						/* pg_dir is at 0x0000 */		
+                                        # 页目录表在0x0000处.
+    movl %eax, %cr3						/* cr3 - page directory start */
+    # 设置启动使用分页处理(cr0的PG标志,位31)
+    movl %cr0, %eax
+    orl $0x80000000, %eax			# 添上PG标志.
+    movl %eax, %cr0					/* set paging (PG) bit */
+    ret								/* this also flushes prefetch-queue */
 
 # 在改变分页处理标志后要求使用转移指令刷新预取指令队列, 这里用的是返回指令ret.
 # 该返回指令的另一个作用是将pushl $main压入堆栈中的main程序的地址弹出,并跳转到/init/main.c程序去运
@@ -378,8 +378,8 @@ setup_paging:							# 首先对5页内存(1页目录+4页页表)清零.
 # 下面是加载中断描述符表寄存器idtr的指令lidt要求的6字节操作数.前2字节是idt表的限长,后4字节是idt表在
 # 线性地址空间中的32位基地址.
 idt_descr:
-	.word 256 * 8 - 1				# idt contains 256 entries
-	.long idt
+    .word 256 * 8 - 1				# idt contains 256 entries
+    .long idt
 .align 2
 .word 0
 
@@ -388,10 +388,10 @@ idt_descr:
 # 符号gdt是全局表在本程序中的偏移位置.
 
 gdt_descr:
-	.word 256 * 8 - 1					# so does gdt (not that that's any
-	.long gdt							# magic number, but it works for me :^)
+    .word 256 * 8 - 1					# so does gdt (not that that's any
+    .long gdt							# magic number, but it works for me :^)
 
-	.align 8							# 按8(2^3)字节方式对齐内存地址边界.
+    .align 8							# 按8(2^3)字节方式对齐内存地址边界.
 idt:	.fill 256, 8, 0					# idt is uninitialized	# 256项,每项8字节,填0.
 
 # 全局表,前4项分别是空项(不用),代码段描述符,数据段描述符,系统调用段描述符,其中系统调用段描述符并没有
@@ -399,8 +399,8 @@ idt:	.fill 256, 8, 0					# idt is uninitialized	# 256项,每项8字节,填0.
 # 建任务的局部描述符(LDT)和对应的任务状态段TSS的描述符.
 # (0-nul, 1-cs, 2-ds, 3-syscall, 4-TSS0, 5-LDT0, 6-TSS1, 7-LDT1, 8-TSS2 etc...)
 gdt:
-	.quad 0x0000000000000000			/* NULL descriptor */
-	.quad 0x00c09a0000000fff			/* 16Mb */		# 0x08,内核代码段最大长度16MB.
-	.quad 0x00c0920000000fff			/* 16Mb */		# 0x10,内核数据段最大长度16MB.
-	.quad 0x0000000000000000			/* TEMPORARY - don't use */
-	.fill 252, 8, 0						/* space for LDT's and TSS's etc */	# 预留空间.
+    .quad 0x0000000000000000			/* NULL descriptor */
+    .quad 0x00c09a0000000fff			/* 16Mb */		# 0x08,内核代码段最大长度16MB.
+    .quad 0x00c0920000000fff			/* 16Mb */		# 0x10,内核数据段最大长度16MB.
+    .quad 0x0000000000000000			/* TEMPORARY - don't use */
+    .fill 252, 8, 0						/* space for LDT's and TSS's etc */	# 预留空间.

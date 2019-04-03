@@ -66,17 +66,15 @@ Image: boot/bootsect boot/setup tools/system tools/build
 	cp -f tools/system system.tmp
 	strip system.tmp
 	objcopy -O binary -R .note -R .comment system.tmp tools/kernel
-	tools/build boot/bootsect boot/setup tools/kernel $(ROOT_DEV) \
-		$(SWAP_DEV) > Image
+	tools/build boot/bootsect boot/setup tools/kernel $(ROOT_DEV) $(SWAP_DEV) > Image
 	rm system.tmp
 	rm tools/kernel -f
 	sync
 
-# 上面的修改就可以保证开启gcc调试后，System文件不变大，build也就不会失败了(build对system大小有
-# 限制)。原先代码为下面注释部分
-#	tools/build boot/bootsect boot/setup tools/system $(ROOT_DEV) \
-#		$(SWAP_DEV) > Image
-#	sync
+	@# 上面的修改就可以保证开启gcc调试后，System文件不变大，build也就不会失败了(build对system大小有
+	@# 限制)。原先规则为下面两句
+	@# tools/build boot/bootsect boot/setup tools/system $(ROOT_DEV) $(SWAP_DEV) > Image
+	@# sync
 
 disk: Image
 	dd bs=8192 if=Image of=/dev/PS0

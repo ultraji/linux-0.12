@@ -48,7 +48,7 @@ bitop(setbit, "s")			/* 定义内嵌函数setbit(char * addr, unsigned int nr) *
 bitop(clrbit, "r")			/* 定义内嵌函数clrbit(char * addr, unsigned int nr) */
 
 static char * swap_bitmap = NULL;
-int SWAP_DEV = 0;		// 内核初始化时设置的交换设备号
+int SWAP_DEV = 0;		/* 内核初始化时设置的交换设备号 */
 
 /*
  * We never page the pages in task[0] - kernel memory.
@@ -64,38 +64,56 @@ int SWAP_DEV = 0;		// 内核初始化时设置的交换设备号
 #define VM_PAGES (LAST_VM_PAGE - FIRST_VM_PAGE)	/* = 1032192(从0开始计)(用总
 												的页面数减去第0个任务的页面数) */
 
-// 申请1页交换页面
-// 扫描整个交换映射位图(除对应位图本身的位0以外)，返回值为1的第一个比特位号，即目前空闲的
-// 交换页面号。若操作成功则返回交换页面号，否则返回0。
+/**
+ * 申请1页交换页面
+ * 扫描整个交换映射位图(除对应位图本身的位0以外)，返回值为1的第一个比特位号，即目前空闲的
+ * 交换页面号。
+ * @param[in]	void
+ * @retval		操作成功则返回交换页面号，否则返回0
+ */
 static int get_swap_page(void)
 {
 	int nr;
 
-	if (!swap_bitmap)
+	if (!swap_bitmap) {
 		return 0;
-	for (nr = 1; nr < 32768 ; nr++)
-		if (clrbit(swap_bitmap, nr))
+	}
+	for (nr = 1; nr < 32768 ; nr++) {
+		if (clrbit(swap_bitmap, nr)) {
 			return nr;		/* 返回目前空闲的交换页面号 */
+		}
+	}
 	return 0;
 }
 
-// 释放交换设备中指定的交换页面
-// 在交换位图中设置指定页面号对应的位(置1)。若原来该位就等于1，则表示交换设备中原来该页面就没
-// 有被占用，或者位图出错。于是显示出错信息并返回。参数指定交换页面号。
+/**
+ * 释放交换设备中指定的交换页面
+ * 在交换位图中设置指定页面号对应的位(置1)。若原来该位就等于1，则表示交换设备中原来该页面就没
+ * 有被占用，或者位图出错。于是显示出错信息并返回。参数指定交换页面号。
+ * @param[in]	swap_nr
+ * @retval		void
+ */
 void swap_free(int swap_nr)
 {
-	if (!swap_nr)
+	if (!swap_nr) {
 		return;
-	if (swap_bitmap && swap_nr < SWAP_BITS)
-		if (!setbit(swap_bitmap, swap_nr))
+	}
+	if (swap_bitmap && swap_nr < SWAP_BITS) {
+		if (!setbit(swap_bitmap, swap_nr)) {
 			return;
+		}
+	}
 	printk("Swap-space bad (swap_free())\n\r");
 	return;
 }
 
-// 把指定页面交换进内存中
-// 把指定页表项的对应页面从交换设备中读入到新申请的内存页面中。修改交换位图中对应位(置位)，同
-// 时修改页表项内容，让它指向该内存页面，并设置相应标志。
+/**
+ * 把指定页面交换进内存中
+ * 把指定页表项的对应页面从交换设备中读入到新申请的内存页面中。修改交换位图中对应位(置位)，同
+ * 时修改页表项内容，让它指向该内存页面，并设置相应标志。
+ * @param[in]	table_ptr
+ * @retval		void
+ */
 void swap_in(unsigned long *table_ptr)
 {
 	int swap_nr;

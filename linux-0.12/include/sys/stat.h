@@ -19,7 +19,7 @@ struct stat {
 
 // 下面是为st_mode字段所用的值定义的符号名称。这些值均用八进制表示，为便于记忆，这些符号名称均
 // 为一些英文单词的首字母或缩写组合而成。例如名称S_IFMT的每个字母分别代表单词State，Inode，File，
-// Mask和Type；而名称s_IFREG则是State，Inode，File和REGular几个大写字母的组合；名称S_IRWXU是
+// Mask和Type；而名称S_IFREG则是State，Inode，File和REGular几个大写字母的组合；名称S_IRWXU是
 // State，Inode，Read，Write，Execute和User的组合。其他名称可以此类推。
 
 /* 文件类型： */
@@ -47,19 +47,19 @@ struct stat {
 
 /* 文件访问权限：*/
 /* User */
-#define S_IRWXU 00700           /* 宿主可以读、写、执行/搜索（名称最后字母代表User）*/
+#define S_IRWXU 00700           /* 宿主可以读、写、执行/搜索(名称最后字母代表User) */
 #define S_IRUSR 00400           /* 宿主读许可 */
 #define S_IWUSR 00200           /* 宿主写许可 */
 #define S_IXUSR 00100           /* 宿主执行/搜索许可 */
 
 /* Group */
-#define S_IRWXG 00070           /* 组成员可以读、写、执行/搜索（名称最后字母代表Group）*/
+#define S_IRWXG 00070           /* 组成员可以读、写、执行/搜索(名称最后字母代表Group) */
 #define S_IRGRP 00040           /* 组成员读许可 */
 #define S_IWGRP 00020           /* 组成员写许可 */
 #define S_IXGRP 00010           /* 组成员执行/搜索许可 */
 
 /* Other */
-#define S_IRWXO 00007           /* 其他人读、写、执行/搜索许可（名称最后字母O代表Other）*/
+#define S_IRWXO 00007           /* 其他人读、写、执行/搜索许可(名称最后字母O代表Other) */
 #define S_IROTH 00004           /* 其他人读许可（最后3个字母代表Other）*/
 #define S_IWOTH 00002           /* 其他人写许可 */
 #define S_IXOTH 00001           /* 其他人执行/搜索许可 */

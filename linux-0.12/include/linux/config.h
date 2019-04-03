@@ -8,10 +8,10 @@
  */
 /* 定义了uname()函数的返回值 */
 #define UTS_SYSNAME "Linux"
-#define UTS_NODENAME "(none)"	/* set by sethostname() */
+#define UTS_NODENAME "(none)"   /* set by sethostname() */
 #define UTS_RELEASE "0"		    /* patchlevel */
 #define UTS_VERSION "0.12"
-#define UTS_MACHINE "i386"	    /* hardware type */
+#define UTS_MACHINE "i386"      /* hardware type */
 
 /* Don't touch these, unless you really know what your doing. */
 /* 请不要随意修改下面定义值，除非你知道自己正在干什么。 */

@@ -66,7 +66,7 @@ static char printbuf[1024];		/* 静态字符串数组，用作内核显示信息
 
 extern char *strcpy();
 extern int vsprintf();
-extern void init(void);							/* 函数原型，初始化 */
+extern void init(void);							/* 初始化 */
 extern void blk_dev_init(void);					/* 块设备初始化blk_drv/ll_re_blk.c */
 extern void chr_dev_init(void);					/* 字符设备初始化chr_drv/tty_io.c */
 extern void hd_init(void);						/* 硬盘初始化blk_drv/hd.c */
@@ -75,7 +75,7 @@ extern void mem_init(long start, long end);		/* 内存管理初始化mm/memory.c
 extern long rd_init(long mem_start, int length);/* 虚拟盘初始化blk_drv/ramdisk.c */
 extern long kernel_mktime(struct tm * tm);		/* 计算系统开机启动时间(秒) */
 
-/* 内核专用sprintf()函数。产生格式化信息并输出到指定缓冲区str中。*/
+/* 内核专用sprintf()函数，产生格式化信息并输出到指定缓冲区str中 */
 static int sprintf(char * str, const char *fmt, ...)
 {
 	va_list args;
@@ -94,8 +94,8 @@ static int sprintf(char * str, const char *fmt, ...)
  * 这些数据由内核引导期间的setup.s程序设置。
  */
 #define EXT_MEM_K (*(unsigned short *)0x90002)			/* 1MB以后的扩展内存大小(KB) */
-#define CON_ROWS ((*(unsigned short *)0x9000e) & 0xff)	/* 选定的控制台屏幕行列数 */
-#define CON_COLS (((*(unsigned short *)0x9000e) & 0xff00) >> 8)
+#define CON_ROWS ((*(unsigned short *)0x9000e) & 0xff)	/* 选定的控制台屏幕的行数 */
+#define CON_COLS (((*(unsigned short *)0x9000e) & 0xff00) >> 8)	/* ...列数 */
 #define DRIVE_INFO (*(struct drive_info *)0x90080)		/* 硬盘参数表32字节内容 */
 #define ORIG_ROOT_DEV (*(unsigned short *)0x901FC)		/* 根文件系统所在设备号 */
 #define ORIG_SWAP_DEV (*(unsigned short *)0x901FA)		/* 交换文件所在设备号 */
@@ -144,12 +144,12 @@ static long buffer_memory_end = 0;		/* 高速缓冲区末端地址 */
 static long main_memory_start = 0;		/* 主内存开始的位置 */
 static char term[32];					/* 终端设置字符串 */
 
-// 读取并执行 /etc/rc 文件时所使用的命令行参数和环境参数。
-static char * argv_rc[] = { "/bin/sh", NULL };		/* 调用执行程序时参数的字符串数值。*/
-static char * envp_rc[] = { "HOME=/", NULL ,NULL };	/* 调用执行程序时的环境字符串数值。*/
+/* 读取并执行 /etc/rc 文件时所使用的命令行参数和环境参数 */
+static char * argv_rc[] = { "/bin/sh", NULL };
+static char * envp_rc[] = { "HOME=/", NULL ,NULL };
 
-// 运行登录shell时所使用的命令行和环境参数。
-// argv[0]中的字符“-”是传递shell程序sh的一个标示位，通过这个标示位，sh程序会作为shell程序执行。
+/* 运行登录shell时所使用的命令行和环境参数 */
+/* argv[0]中的字符“-”是传递shell程序sh的一个标示位，通过这个标示位，sh程序会作为shell程序执行 */
 static char * argv[] = { "-/bin/sh", NULL };
 static char * envp[] = { "HOME=/usr/root", NULL, NULL };
 
@@ -162,8 +162,7 @@ void main(void)		/* This really is void, no error here. */
 {					/* The startup routine assumes (well, ...) this */
 					/* 因为在 head.s 就是这么假设的(把 main 的地址压入堆栈的时候) */
 /*
- * Interrupts are still disabled. Do necessary setups, then
- * enable them
+ * Interrupts are still disabled. Do necessary setups, then enable them
  */
 /*
  * 此时中断还被禁止的，做完必要的设置后就将其开启。
@@ -249,24 +248,23 @@ static int printf(const char *fmt, ...)
  行初始化，然后以登录shell方式加载该程序并执行 */
 void init(void)
 {
-	int pid,i;
+	int pid, i;
 
 	/* setup()是一个系统调用。用来读取硬盘参数包括分区表信息并加载虚拟盘(如果存在的话)和安装
 	根文件系统设备。*/
 	setup((void *) &drive_info);
 
-	/* 以读写方式打开“/dev/tty1”,它对应终端控制台。因为这是第一次打开文件操作，所以产生的文
-	 件句柄号(文件描述符)肯定是 0。 */
+	/* 以读写方式打开“/dev/tty1”，它对应终端控制台。因为这是第一次打开文件操作，所以产生的文
+	 件句柄号(文件描述符)肯定是0。 */
 	(void) open("/dev/tty1", O_RDWR, 0);	/* stdin */
-	(void) dup(0);		/* 复制句柄，产生句柄1号 -- stdout */
-	(void) dup(0);		/* 复制句柄，产生句柄2号 -- stderr */
+	(void) dup(0);		/* stdout */
+	(void) dup(0);		/* stderr */
 
 	printf("%d buffers = %d bytes buffer space\n\r", NR_BUFFERS,
 		NR_BUFFERS*BLOCK_SIZE);
 	printf("Free mem: %d bytes\n\r", memory_end - main_memory_start);
 
-	// 下面通过fork()用于创建一个子进程(任务 2)。对于被创建的子进程，fork()将返回 0 值，对于
-	// 原进程则返回子进程的进程号 pid。
+	// 下面通过fork()用于创建一个子进程(任务 2)。
 	// 首先子进程(任务 2)关闭句柄 0 (stdin)，以只读方式打开 /etc/rc 文件，并使用execve()函
 	// 数将进程自身替换成 /bin/sh 程序，然后执行 /bin/sh 程序。所携带的参数和环境变量分别由
 	// argv_rc 和 envp_rc 数组给出。关闭句柄 0 立即打开 /etc/rc 文件 是为了把 stdin 重定向
@@ -292,7 +290,7 @@ void init(void)
 	 退出，打印信息，重复循环下去，一直会在这个大循环里。*/
 	while (1) {
 		/* 如果出错，则显示“初始化创建子程序失败”信息并继续执行 */
-		if ((pid=fork())<0) {
+		if ((pid = fork()) < 0) {
 			printf("Fork failed in init\r\n");
 			continue;
 		}
@@ -301,16 +299,18 @@ void init(void)
 		if (!pid) {
 			close(0);close(1);close(2);
 			setsid();
-			(void) open("/dev/tty1",O_RDWR,0);
+			(void) open("/dev/tty1", O_RDWR, 0);
 			(void) dup(0);
 			(void) dup(0);
-			_exit(execve("/bin/sh",argv,envp));
+			_exit(execve("/bin/sh", argv, envp));
 		}
 		/* 然后父进程再次运行wait()等待 */
-		while (1)
-			if (pid == wait(&i))
+		while (1) {
+			if (pid == wait(&i)) {
 				break;
-		printf("\n\rchild %d died with code %04x\n\r",pid,i);
+			}
+		}
+		printf("\n\rchild %d died with code %04x\n\r", pid, i);
 		sync();				/* 同步操作，刷新缓冲区 */
 	}
 	_exit(0);	/* NOTE! _exit, not exit() */

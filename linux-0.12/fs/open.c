@@ -42,15 +42,17 @@ int sys_ustat(int dev, struct ustat * ubuf)
 int sys_utime(char * filename, struct utimbuf * times)
 {
 	struct m_inode * inode;
-	long actime,modtime;
+	long actime, modtime;
 
-	if (!(inode=namei(filename)))
+	if (!(inode = namei(filename))) {
 		return -ENOENT;
+	}
 	if (times) {
 		actime = get_fs_long((unsigned long *) &times->actime);
 		modtime = get_fs_long((unsigned long *) &times->modtime);
-	} else
+	} else {
 		actime = modtime = CURRENT_TIME;
+	}
 	inode->i_atime = actime;
 	inode->i_mtime = modtime;
 	inode->i_dirt = 1;
@@ -75,22 +77,26 @@ int sys_utime(char * filename, struct utimbuf * times)
  * @param[in]	mode			检查的访问属性
  * @retval		如果访问允许的话，则返回0；否则，返回出错码
  */
-int sys_access(const char * filename,int mode)
+int sys_access(const char * filename, int mode)
 {
 	struct m_inode * inode;
 	int res, i_mode;
 
 	mode &= 0007;
-	if (!(inode=namei(filename)))
+	if (!(inode = namei(filename))) {
 		return -EACCES;
+	}
 	i_mode = res = inode->i_mode & 0777;
 	iput(inode);
-	if (current->uid == inode->i_uid)
+	if (current->uid == inode->i_uid) {
 		res >>= 6;
-	else if (current->gid == inode->i_gid)
+	}
+	else if (current->gid == inode->i_gid) {
 		res >>= 6;
-	if ((res & 0007 & mode) == mode)
+	}
+	if ((res & 0007 & mode) == mode) {
 		return 0;
+	}
 	/*
 	 * XXX we are doing this test last because we really should be
 	 * swapping the effective with the real user id (temporarily),
@@ -180,8 +186,9 @@ int sys_chown(const char * filename,int uid,int gid)
 {
 	struct m_inode * inode;
 
-	if (!(inode=namei(filename)))
+	if (!(inode = namei(filename))) {
 		return -ENOENT;
+	}
 	if (!suser()) {
 		iput(inode);
 		return -EACCES;
@@ -201,7 +208,7 @@ int sys_chown(const char * filename,int uid,int gid)
  * @param[in]	inode		i节点
  * @param[in]	dev			设备号
  * @param[in]	flag		文件操作标志
- * @retval		成功返回0；失败返回-1(对应字符设备不能打开)
+ * @retval		成功返回0，失败返回-1(对应字符设备不能打开)
  */
 static int check_char_dev(struct m_inode * inode, int dev, int flag)
 {
@@ -209,14 +216,17 @@ static int check_char_dev(struct m_inode * inode, int dev, int flag)
 	int min;
 
 	if (MAJOR(dev) == 4 || MAJOR(dev) == 5) {
-		if (MAJOR(dev) == 5)
+		if (MAJOR(dev) == 5) {
 			min = current->tty;
-		else
+		} else {
 			min = MINOR(dev);
-		if (min < 0)
+		}
+		if (min < 0) {
 			return -1;
-		if ((IS_A_PTY_MASTER(min)) && (inode->i_count>1))
+		}
+		if ((IS_A_PTY_MASTER(min)) && (inode->i_count>1)) {
 			return -1;
+		}
 		tty = TTY_TABLE(min);
 		if (!(flag & O_NOCTTY) &&
 		    current->leader &&
@@ -237,47 +247,58 @@ static int check_char_dev(struct m_inode * inode, int dev, int flag)
 
 
 /**
- * 打开(或创建)文件 系统调用
+ * 打开(或创建)文件
+ * @note 实际上open的操作是将进程中的文件描述符指向了系统中的文件表项，该项又指向了打开的文件
+ * 		索引节点(inode)。
  * @param[in]	filename	文件名
  * @param[in]	flag		打开文件标志
  * @param[in]	mode		文件属性
- * @retval		成功返回文件句柄；失败返回出错码
+ * @retval		成功返回文件句柄，失败返回出错码
  */
 int sys_open(const char * filename, int flag, int mode)
 {
 	struct m_inode * inode;
 	struct file * f;
-	int i,fd;
+	int i, fd;
 
 	mode &= 0777 & ~current->umask;
-	for(fd=0 ; fd<NR_OPEN ; fd++)
-		if (!current->filp[fd])
+	for(fd = 0; fd < NR_OPEN; fd ++) {
+		if (!current->filp[fd]) {	/* 找到最小的文件描述符fd */
 			break;
-	if (fd>=NR_OPEN)
+		}
+	}
+	if (fd >= NR_OPEN) {
 		return -EINVAL;
+	}
 	current->close_on_exec &= ~(1<<fd);
-	f=0+file_table;
-	for (i=0 ; i<NR_FILE ; i++,f++)
-		if (!f->f_count) break;
-	if (i>=NR_FILE)
+	f = 0 + file_table;
+	for (i = 0; i < NR_FILE; i++, f++) {
+		if (!f->f_count) {			/* 在文件表中找到空闲结构项 */
+			break;
+		}
+	}
+	if (i >= NR_FILE) {
 		return -EINVAL;
-	(current->filp[fd]=f)->f_count++;
-	if ((i=open_namei(filename,flag,mode,&inode))<0) {
-		current->filp[fd]=NULL;
-		f->f_count=0;
+	}
+	(current->filp[fd] = f)->f_count++;
+	if ((i = open_namei(filename, flag, mode, &inode)) < 0) {
+		current->filp[fd] = NULL;
+		f->f_count = 0;
 		return i;
 	}
 /* ttys are somewhat special (ttyxx major==4, tty major==5) */
-	if (S_ISCHR(inode->i_mode))
-		if (check_char_dev(inode,inode->i_zone[0],flag)) {
+	if (S_ISCHR(inode->i_mode)) {
+		if (check_char_dev(inode, inode->i_zone[0], flag)) {
 			iput(inode);
-			current->filp[fd]=NULL;
-			f->f_count=0;
+			current->filp[fd] = NULL;
+			f->f_count = 0;
 			return -EAGAIN;
 		}
+	}
 /* Likewise with block-devices: check for floppy_change */
-	if (S_ISBLK(inode->i_mode))
+	if (S_ISBLK(inode->i_mode)) {
 		check_disk_change(inode->i_zone[0]);
+	}
 	f->f_mode = inode->i_mode;
 	f->f_flags = flag;
 	f->f_count = 1;
@@ -288,10 +309,10 @@ int sys_open(const char * filename, int flag, int mode)
 
 
 /**
- * 创建文件 系统调用
+ * 创建文件
  * @param[in]	pathname	路径名
  * @param[in]	mode		文件属性
- * 成功则返回文件句柄，否则返回出错码
+ * @retval		成功返回文件句柄，失败返回出错码
  */
 int sys_creat(const char * pathname, int mode)
 {
@@ -300,24 +321,28 @@ int sys_creat(const char * pathname, int mode)
 
 
 /**
- * 关闭文件 系统调用
+ * 关闭文件
  * @param[in]	fd		文件句柄
- * 成功则返回0，失败返回出错码
+ * @retval		成功返回0，失败返回出错码
  */
 int sys_close(unsigned int fd)
 {	
 	struct file * filp;
 
-	if (fd >= NR_OPEN)
+	if (fd >= NR_OPEN) {
 		return -EINVAL;
+	}
 	current->close_on_exec &= ~(1<<fd);
-	if (!(filp = current->filp[fd]))
+	if (!(filp = current->filp[fd])) {
 		return -EINVAL;
+	}
 	current->filp[fd] = NULL;
-	if (filp->f_count == 0)
+	if (filp->f_count == 0) {
 		panic("Close: file count is 0");
-	if (--filp->f_count)
+	}
+	if (--filp->f_count) {
 		return (0);
+	}
 	iput(filp->f_inode);
 	return (0);
 }

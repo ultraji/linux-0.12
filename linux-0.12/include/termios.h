@@ -133,7 +133,7 @@ struct termios {
 
 /* c_cflag bit meaning */
 #define CBAUD	0000017
-#define  B0	0000000		/* hang up */
+#define  B0		0000000		/* hang up */
 #define  B50	0000001
 #define  B75	0000002
 #define  B110	0000003

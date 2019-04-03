@@ -25,7 +25,6 @@ struct exec {
 
 /* 魔数：很多类型的文件，其起始的几个字节的内容是固定的（或是有意填充，或是本就如此）。因此这几
  个字节的内容也被称为魔数 (magic number)，因为根据这几个字节的内容就可以确定文件类型。*/
-
 #ifndef N_MAGIC
 #define N_MAGIC(exec) ((exec).a_magic)
 #endif

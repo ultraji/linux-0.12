@@ -88,6 +88,7 @@ static inline void wait_on_buffer(struct buffer_head * bh)
 /**
  * 设备数据同步
  * 将内存高速缓冲区中的数据同步到设备中
+ * @param[in]	void
  * @retval  	0
  */
 int sys_sync(void)

@@ -19,7 +19,7 @@
 
 extern void write_verify(unsigned long address);
 
-long last_pid=0;
+long last_pid = 0;
 
 void verify_area(void * addr,int size)
 {

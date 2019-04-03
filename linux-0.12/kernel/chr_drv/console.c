@@ -42,16 +42,17 @@
 #include <string.h>
 #include <errno.h>
 
-#define DEF_TERMIOS \
-(struct termios) { \
-	ICRNL, \
-	OPOST | ONLCR, \
-	0, \
-	IXON | ISIG | ICANON | ECHO | ECHOCTL | ECHOKE, \
-	0, \
-	INIT_C_CC \
-}
 
+/* 该符号常量定义终端IO结构的默认数据 */
+#define DEF_TERMIOS 		                                \
+	(struct termios) { 		                                \
+	        ICRNL, 			                                \
+        	OPOST | ONLCR,                                  \
+	        0,                                              \
+	        IXON | ISIG | ICANON | ECHO | ECHOCTL | ECHOKE, \
+	        0,                                              \
+	        INIT_C_CC                                       \
+    }
 
 /*
  * These are set up by the setup-routine at boot-time:
@@ -67,10 +68,10 @@
 #define ORIG_VIDEO_EGA_BX	(*(unsigned short *)0x9000a)
 #define ORIG_VIDEO_EGA_CX	(*(unsigned short *)0x9000c)
 
-#define VIDEO_TYPE_MDA		0x10	/* Monochrome Text Display	*/
-#define VIDEO_TYPE_CGA		0x11	/* CGA Display 			*/
-#define VIDEO_TYPE_EGAM		0x20	/* EGA/VGA in Monochrome Mode	*/
-#define VIDEO_TYPE_EGAC		0x21	/* EGA/VGA in Color Mode	*/
+#define VIDEO_TYPE_MDA		0x10	/* Monochrome Text Display */
+#define VIDEO_TYPE_CGA		0x11	/* CGA Display */
+#define VIDEO_TYPE_EGAM		0x20	/* EGA/VGA in Monochrome Mode */
+#define VIDEO_TYPE_EGAC		0x21	/* EGA/VGA in Color Mode */
 
 #define NPAR 16
 
@@ -78,15 +79,15 @@ int NR_CONSOLES = 0;
 
 extern void keyboard_interrupt(void);
 
-static unsigned char	video_type;		/* Type of display being used	*/
-static unsigned long	video_num_columns;	/* Number of text columns	*/
-static unsigned long	video_mem_base;		/* Base of video memory		*/
-static unsigned long	video_mem_term;		/* End of video memory		*/
-static unsigned long	video_size_row;		/* Bytes per row		*/
-static unsigned long	video_num_lines;	/* Number of test lines		*/
-static unsigned char	video_page;		/* Initial video page		*/
-static unsigned short	video_port_reg;		/* Video register select port	*/
-static unsigned short	video_port_val;		/* Video register value port	*/
+static unsigned char	video_type;		    /* Type of display being used */
+static unsigned long	video_num_columns;	/* Number of text columns */
+static unsigned long	video_mem_base;		/* Base of video memory	*/
+static unsigned long	video_mem_term;		/* End of video memory */
+static unsigned long	video_size_row;		/* Bytes per row */
+static unsigned long	video_num_lines;	/* Number of test lines	*/
+static unsigned char	video_page;		    /* Initial video page */
+static unsigned short	video_port_reg;		/* Video register select port */
+static unsigned short	video_port_val;		/* Video register value port */
 static int can_do_colour = 0;
 
 static struct {

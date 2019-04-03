@@ -10,6 +10,11 @@
  * call functions (type getpid(), which just extracts a field from
  * current-task
  */
+
+/*
+ * 'sched.c'是主要的内核文件。其中包括有关高度的基本函数(sleep_on，wakeup，schedule等)以及一些
+ * 简单的系统调用函数(比如getpid()，仅从当前任务中获取一个字段)。
+ */
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/sys.h>
@@ -20,26 +25,31 @@
 
 #include <signal.h>
 
-#define _S(nr) (1<<((nr)-1))
-#define _BLOCKABLE (~(_S(SIGKILL) | _S(SIGSTOP)))
+/* 该宏取信号nr在信号位图中对应位的二进制数值。信号编号1-32 */
+#define _S(nr) 		(1<<((nr)-1))
 
-void show_task(int nr,struct task_struct * p)
+/* 除了SIGKILL和SIGSTOP信号以外其他信号都是可阻塞的 */
+#define _BLOCKABLE 	(~(_S(SIGKILL) | _S(SIGSTOP)))
+
+/* static */ void show_task(int nr, struct task_struct * p)
 {
-	int i,j = 4096-sizeof(struct task_struct);
+	int i, j = 4096 - sizeof(struct task_struct);
 
-	printk("%d: pid=%d, state=%d, father=%d, child=%d, ",nr,p->pid,
+	printk("%d: pid=%d, state=%d, father=%d, child=%d, ", nr, p->pid,
 		p->state, p->p_pptr->pid, p->p_cptr ? p->p_cptr->pid : -1);
-	i=0;
-	while (i<j && !((char *)(p+1))[i])
+	i = 0;
+	while (i < j && !((char *)(p+1))[i]) {
 		i++;
+	}
 	printk("%d/%d chars free in kstack\n\r",i,j);
 	printk("   PC=%08X.", *(1019 + (unsigned long *) p));
-	if (p->p_ysptr || p->p_osptr) 
+	if (p->p_ysptr || p->p_osptr) {
 		printk("   Younger sib=%d, older sib=%d\n\r", 
 			p->p_ysptr ? p->p_ysptr->pid : -1,
 			p->p_osptr ? p->p_osptr->pid : -1);
-	else
+	} else {
 		printk("\n\r");
+	}
 }
 
 void show_state(void)
@@ -47,9 +57,11 @@ void show_state(void)
 	int i;
 
 	printk("\rTask-info:\n\r");
-	for (i=0;i<NR_TASKS;i++)
-		if (task[i])
-			show_task(i,task[i]);
+	for (i = 0; i < NR_TASKS; i++) {
+		if (task[i]) {
+			show_task(i, task[i]);
+		}
+	}
 }
 
 #define LATCH (1193180/HZ)
@@ -91,8 +103,9 @@ struct {
  */
 void math_state_restore()
 {
-	if (last_task_used_math == current)
+	if (last_task_used_math == current) {
 		return;
+	}
 	__asm__("fwait");
 	if (last_task_used_math) {
 		__asm__("fnsave %0"::"m" (last_task_used_math->tss.i387));
@@ -102,7 +115,7 @@ void math_state_restore()
 		__asm__("frstor %0"::"m" (current->tss.i387));
 	} else {
 		__asm__("fninit"::);
-		current->used_math=1;
+		current->used_math = 1;
 	}
 }
 
@@ -116,9 +129,18 @@ void math_state_restore()
  * tasks can run. It can not be killed, and it cannot sleep. The 'state'
  * information in task[0] is never used.
  */
+
+/*
+ * 'schedule()' 是一个调度函数。这是一块很好的代码，没有理由去修改它，因为它可以在所有的环境下工
+ * 作(比如能够对IO-边界下得很好的响应等)。只有一件事值得留意，那就是这里的信号处进代码。
+ * 
+ * 注意!!任务0是个闲置('idle')任务，只有当没有其他任务可以运行时才调用它。它不能被杀死，也不睡眠。
+ * 任务0中的状态信息'state'是从来不用的。
+ * 
+ */
 void schedule(void)
 {
-	int i,next,c;
+	int i, next, c;
 	struct task_struct ** p;
 
 /* check alarm, wake up any interruptible tasks that have got a signal */
@@ -135,8 +157,9 @@ void schedule(void)
 				(*p)->alarm = 0;
 			}
 			if (((*p)->signal & ~(_BLOCKABLE & (*p)->blocked)) &&
-			(*p)->state==TASK_INTERRUPTIBLE)
+			(*p)->state==TASK_INTERRUPTIBLE) {
 				(*p)->state=TASK_RUNNING;
+			}
 		}
 
 /* this is the scheduler proper: */
@@ -161,6 +184,12 @@ void schedule(void)
 	switch_to(next);
 }
 
+/**
+ * 转换当前任务的状态为可中断的等待状态
+ * 该系统调用将导致进程进入睡眠状态，直到收到一个信号。该信号用于终止进程或者使进程调用一个信号捕
+ * 获函数。只有当捕获了一个信号，并且信号捕获处理函数返回，pause()才会返回。此时pause()返回值应
+ * 该是-1，并且errno被置为EINTR。这里还没有完全实现(直到0.95版)
+ */
 int sys_pause(void)
 {
 	current->state = TASK_INTERRUPTIBLE;
@@ -321,33 +350,44 @@ void add_timer(long jiffies, void (*fn)(void))
 	sti();
 }
 
+/**
+ * 时钟中断C函数处理程序
+ * 对于一个进程由于执行时间片用完时，则进行任务切换，并执行一个计时更新工作。在sys_call.s中
+ * 的timer_interrupt被调用。
+ * @param[in]	cpl		当前特权级，是时钟中断发生时正被执行的代码选择符中的特权级
+ * @retval		void
+ */
 void do_timer(long cpl)
 {
 	static int blanked = 0;
 
 	if (blankcount || !blankinterval) {
-		if (blanked)
+		if (blanked) {
 			unblank_screen();
-		if (blankcount)
+		}
+		if (blankcount) {
 			blankcount--;
+		}
 		blanked = 0;
 	} else if (!blanked) {
 		blank_screen();
 		blanked = 1;
 	}
-	if (hd_timeout)
-		if (!--hd_timeout)
+	if (hd_timeout) {
+		if (!--hd_timeout) {
 			hd_times_out();
-
-	if (beepcount)
-		if (!--beepcount)
+		}
+	}
+	if (beepcount) {
+		if (!--beepcount) {
 			sysbeepstop();
-
-	if (cpl)
+		}
+	}
+	if (cpl) {
 		current->utime++;
-	else
+	} else {
 		current->stime++;
-
+	}
 	if (next_timer) {
 		next_timer->jiffies--;
 		while (next_timer && next_timer->jiffies <= 0) {
@@ -359,66 +399,87 @@ void do_timer(long cpl)
 			(fn)();
 		}
 	}
-	if (current_DOR & 0xf0)
+	if (current_DOR & 0xf0) {
 		do_floppy_timer();
-	if ((--current->counter)>0) return;
+	}
+	if ((--current->counter)>0) {
+		return;
+	}
 	current->counter=0;
-	if (!cpl) return;
+	if (!cpl) {
+		return;
+	}
 	schedule();
 }
 
+/**
+ * 设置报警定时时间值（秒）
+ * @note 		alarm的单位是系统滴答（1滴答为10毫秒）,它是系统开机起到设置定时操作时系统滴答值
+ * 				jiffies和转换成滴答单位的定时值之和，即'jiffies + HZ*定时秒值'
+ * @param[in]	seconds		新的定时时间值(单位是秒)
+ * @retval		若参数seconds大于0，则设置新定时值，并返回原定时时刻还剩余的间隔时间；否则返回0。
+ */
 int sys_alarm(long seconds)
 {
 	int old = current->alarm;
 
-	if (old)
+	if (old) {
 		old = (old - jiffies) / HZ;
-	current->alarm = (seconds>0)?(jiffies+HZ*seconds):0;
+	}
+	current->alarm = (seconds > 0) ? (jiffies + HZ * seconds) : 0;
 	return (old);
 }
 
+/* 取进程号pid */
 int sys_getpid(void)
 {
 	return current->pid;
 }
 
+/* 取父进程号ppid */
 int sys_getppid(void)
 {
 	return current->p_pptr->pid;
 }
 
+/* 取用户id */
 int sys_getuid(void)
 {
 	return current->uid;
 }
 
+/* 取有效用户id */
 int sys_geteuid(void)
 {
 	return current->euid;
 }
 
+/* 取组号gid */
 int sys_getgid(void)
 {
 	return current->gid;
 }
 
+/* 取有效的组号egid */
 int sys_getegid(void)
 {
 	return current->egid;
 }
 
+/**
+ * 改变对cpu的使用优先权
+ * @param[in]	increment
+ * @retval		0
+ */
 int sys_nice(long increment)
 {
-	if (current->priority-increment>0)
+	if (current->priority-increment > 0) {
 		current->priority -= increment;
+	}
 	return 0;
 }
 
-/**
- * 内核调度程序的初始化子程序
- * @param[in]	void
- * retval		void
- */
+/* 内核调度程序的初始化子程序 */
 void sched_init(void)
 {
 	int i;

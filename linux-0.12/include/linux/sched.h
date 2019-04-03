@@ -104,14 +104,17 @@ struct tss_struct {
 
 struct task_struct {
 /* these are hardcoded - don't touch */
-	long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
-	long counter;
-	long priority;
-	long signal;
-	struct sigaction sigaction[32];
-	long blocked;	/* bitmap of masked signals */
+/* 硬编码字段 */
+	long state;						/* -1 unrunnable, 0 runnable, >0 stopped */
+									/* 任务运行状态 -1 不可运行，0 可运行(就绪)， >0 已停止 */
+	long counter;					/* 任务运行时间计数(递减)(滴答数)，运行时间片 */
+	long priority;					/* 优先级 */
+	long signal;					/* 信号位图 */
+	struct sigaction sigaction[32];	/* 信号执行属性结构,对应信号将要执行的操作和标志信息 */
+	long blocked;					/* bitmap of masked signals */
 /* various fields */
-	int exit_code;
+/* 可变字段 */
+	int exit_code;					/* 退出码 */
 	unsigned long start_code,end_code,end_data,brk,start_stack;
 	long pid,pgrp,session,leader;
 	int	groups[NGROUPS];
@@ -130,7 +133,7 @@ struct task_struct {
 	unsigned short used_math;
 /* file system info */
 	int tty;		/* -1 if no tty, so it must be signed */
-	unsigned short umask;
+	unsigned short umask;			/* 文件创建属性屏蔽位 */
 	struct m_inode * pwd;
 	struct m_inode * root;
 	struct m_inode * executable;
@@ -219,19 +222,19 @@ __asm__("str %%ax\n\t" \
  * This also clears the TS-flag if the task we switched to has used
  * tha math co-processor latest.
  */
-#define switch_to(n) {\
-struct {long a,b;} __tmp; \
-__asm__("cmpl %%ecx,current\n\t" \
-	"je 1f\n\t" \
-	"movw %%dx,%1\n\t" \
-	"xchgl %%ecx,current\n\t" \
-	"ljmp %0\n\t" \
-	"cmpl %%ecx,last_task_used_math\n\t" \
-	"jne 1f\n\t" \
-	"clts\n" \
-	"1:" \
-	::"m" (*&__tmp.a),"m" (*&__tmp.b), \
-	"d" (_TSS(n)),"c" ((long) task[n])); \
+#define switch_to(n) {							\
+struct {long a,b;} __tmp; 						\
+__asm__("cmpl %%ecx,current\n\t"			 	\
+	"je 1f\n\t" 								\
+	"movw %%dx,%1\n\t" 							\
+	"xchgl %%ecx,current\n\t" 					\
+	"ljmp %0\n\t" 								\
+	"cmpl %%ecx,last_task_used_math\n\t" 		\
+	"jne 1f\n\t" 								\
+	"clts\n"									\
+	"1:" 										\
+	::"m" (*&__tmp.a),"m" (*&__tmp.b), 			\
+	"d" (_TSS(n)),"c" ((long) task[n])); 		\
 }
 
 #define PAGE_ALIGN(n) (((n)+0xfff)&0xfffff000)

@@ -344,7 +344,8 @@ struct buffer_head * get_hash_table(int dev, int block)
 		}
 		bh->b_count--;
 		#if 0
-		/* TODO: 为什么不是这样 */
+		// Q: 上面为什么不是这样? 
+		// A: bh->b_count先自增，会告诉系统，这个块还要用，别释放。
 		wait_on_buffer(bh);
 		if (bh->b_dev == dev && bh->b_blocknr == block) {
 			bh->b_count ++;

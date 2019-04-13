@@ -41,8 +41,7 @@ void wait_for_keypress(void);	/* 等待击键(kernel/chr_drv/tty_io.c) */
 	__res; })
 
 struct super_block super_block[NR_SUPER];	/* 超级块结构表数组(NR_SUPER=8) */
-/* this is initialized in init/main.c */
-/* ROOT_DEV已在init/main.c中被初始化 */
+/* this is initialized in init/main.c */ 	/* ROOT_DEV已在init/main.c中被初始化 */
 int ROOT_DEV = 0;	/* 根文件系统设备号 */
 
 /* 以下3个函数(lock_super()，free_super()和wait_on_super())的作用与inode.c文件中头3个函
@@ -52,7 +51,7 @@ int ROOT_DEV = 0;	/* 根文件系统设备号 */
  * 锁定超级块
  * 如果超级块已被锁定，则将当前任务置为不可中断的等待状态，并添加到该超级块等待队列s_wait中。直到
  * 该超级块解锁并明确地唤醒本任务，然后对其上锁
- * @param[in]	*sb		超级块指针
+ * @param[in]	sb		超级块指针
  * @retval		void
  */
 static void lock_super(struct super_block *sb)
@@ -69,7 +68,7 @@ static void lock_super(struct super_block *sb)
  * 对指定超级块解锁
  * 复位超级块的锁定标志，并明确地唤醒等待此超级块等待队列s_wait上的所有进程(如果使用unlock_super
  * 这个名称则可能更妥帖)。
- * @param[in]	*sb		超级块指针
+ * @param[in]	sb		超级块指针
  * @retval		void
  */
 static void free_super(struct super_block * sb)
@@ -84,7 +83,7 @@ static void free_super(struct super_block * sb)
  * 睡眠等待超级块解锁
  * 如果超级块已被锁定，则将当前任务置为不可中断的等待状态，并添加到该超级块的等待队列s_wait中。
  * 直到该超级块解锁并明确地唤醒本任务。
- * @param[in]	*sb		超级块指针
+ * @param[in]	sb		超级块指针
  * @retval		void
  */
 static void wait_on_super(struct super_block * sb)

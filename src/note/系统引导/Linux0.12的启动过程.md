@@ -1,5 +1,7 @@
 # Linux0.12的启动过程
 
+**相关文件：bootsect.S、setup.S**
+
 <div align=center>
 <img src=".pic/Linux0.12的启动过程.png" width = 70% height = 70% /> 
 </div>

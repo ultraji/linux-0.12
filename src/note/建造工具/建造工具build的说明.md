@@ -1,5 +1,7 @@
 # 建造工具 build 的说明
 
+**相关文件：build.c**
+
 生成build的源代码文件在```tools```目录下，该文件将被独立编译成一个可执行文件，只参与将bootsect、setup、system三个文件组合成一个映像文件Imgae，不会被包含到Imgae中，因此可以拿出来单独分析。该执行文件在主目录下的Makefile中被使用，通过以下以下命令生成映像文件Image。
 
 ```

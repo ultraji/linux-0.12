@@ -42,13 +42,14 @@ linux-0.12目录为修改过的源代码，其中加入了**中文注释**，修
 
 ### 建造工具
 
-1. [建造工具build的说明](src/note/建造工具/建造工具build的说明.md)
+1. [建造工具build的说明](src/note/建造工具/建造工具build的说明.md) 相关文件：`tools/build.c`
 
-### 系统引导
+### 系统引导 boot/
 
-1. [Linux0.12的启动过程](src/note/系统引导/Linux0.12的启动过程.md)
+1. [Linux0.12的启动过程](src/note/系统引导/Linux0.12的启动过程.md) 相关文件：`bootsect.S、setup.S`
 
-### 文件系统
+### 文件系统 fs/
 
 1. [总览](src/note/文件系统/总览.md)
-2. [高速缓冲区的实现](src/note/文件系统/高速缓冲区的实现.md)
+2. [高速缓冲区的实现](src/note/文件系统/高速缓冲区的实现.md) 相关文件：`buffer.c`
+3. [write和read的实现](src/note/文件系统/write和read的实现.md) 相关文件：`block_dev.c、file_dev.c、char_dev.c、pipe.c、read_write.c`

@@ -413,7 +413,7 @@ void chr_dev_init(void)
 
 /* 
  * tty终端初始化函数
- * 初始化所有终端缓冲队列,初始化串口终端和控制台终端
+ * 初始化所有终端缓冲队列，初始化串口终端和控制台终端
  * @param[in]	void
  * @retval		void
  */

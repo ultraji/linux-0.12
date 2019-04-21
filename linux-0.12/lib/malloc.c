@@ -80,7 +80,7 @@
 #include <linux/mm.h>
 #include <asm/system.h>
 
-// 存储桶描述符结构
+/* 存储桶描述符结构 */
 struct bucket_desc {					/* 16 bytes */
 	void				*page;          /* 该桶描述符对应的内存页面指针 */
 	struct bucket_desc	*next;          /* 下一个描述符指针 */
@@ -89,7 +89,7 @@ struct bucket_desc {					/* 16 bytes */
 	unsigned short		bucket_size;    /* 本描述符对应存储桶的大小 */
 };
 
-// 存储桶描述符目录结构
+/* 存储桶描述符目录结构 */
 struct _bucket_dir {					/* 8 bytes */
 	int			size;           		/* 该存储桶的大小（字节数） */
 	struct bucket_desc	*chain;         /* 该存储桶目录项的桶描述符链表指针 */
@@ -114,7 +114,7 @@ struct _bucket_dir {					/* 8 bytes */
  * 中，因为这样可以使内存的分配更有效。但是，因为一页完整内存页面必须用于列表中指定大小的
  * 所有对象，所以需要做总数方面的测试操作。
  */
-// 存储桶目录列表（数组）。
+/* 存储桶目录列表（数组）*/
 struct _bucket_dir bucket_dir[] = {
 	{ 16,	(struct bucket_desc *) 0},      /* 16字节长度的内存块 */
 	{ 32,	(struct bucket_desc *) 0},      /* 32字节长度的内存块 */
@@ -141,8 +141,10 @@ struct bucket_desc *free_bucket_desc = (struct bucket_desc *) 0;
 /*
  * 下面的子程序用于初始化一页桶描述符页面。
  */
-// 初始化桶描述符。
-// 建立空闲桶描述符链表，并让free_bucket_desc指向第一个空闲桶描述符。
+/**
+ * 初始化桶描述符
+ * 建立空闲桶描述符链表，并让free_bucket_desc指向第一个空闲桶描述符。
+ */
 static inline void init_bucket_desc()
 {
 	struct bucket_desc *bdesc, *first;
@@ -151,8 +153,9 @@ static inline void init_bucket_desc()
 	// 申请一页内存，用于存放桶描述符。如果失败，则显示初始化桶描述符时内存不够出错
 	// 信息，死机。
 	first = bdesc = (struct bucket_desc *) get_free_page();
-	if (!bdesc)
+	if (!bdesc) {
 		panic("Out of memory in init_bucket_desc()");
+	}
 	// 首先计算一页内存中可存放的桶描述符数量，然后对其建立单向链接指针。
 	for (i = PAGE_SIZE / sizeof(struct bucket_desc); i > 1; i--) {
 		bdesc->next = bdesc + 1;
@@ -171,9 +174,11 @@ static inline void init_bucket_desc()
 	free_bucket_desc = first;
 }
 
-// 分配动态内存函数。
-// 参数：len - 请求的内在块长度。
-// 返回：指向被分配内在的指针。如果失败则返回NULL。
+/**
+ * 分配动态内存函数
+ * @param[in]	len		请求的内存块长度
+ * @retval		成功返回指向被分配内在的指针，失败返回NULL
+*/
 void *malloc(unsigned int len)
 {
 	struct _bucket_dir	*bdir;
@@ -189,14 +194,15 @@ void *malloc(unsigned int len)
      */
 	// 搜索存储桶目录，寻找适合申请内存块大小的桶描述符链表。如果目录项的桶字节数大于请求
 	// 的字节数，就找到了对应的桶目录项。
-	for (bdir = bucket_dir; bdir->size; bdir++)
-		if (bdir->size >= len)
+	for (bdir = bucket_dir; bdir->size; bdir++) {
+		if (bdir->size >= len) {
 			break;
+		}
+	}
 	// 如果搜索完整个目录都没有找到合适大小的目录项，则表明所请求的内存块大小太大，超出了
 	// 该程序的分配限制（最长为1个页面）。于是显示出错信息，死机。
 	if (!bdir->size) {
-		printk("malloc called with impossibly large argument (%d)\n",
-			len);
+		printk("malloc called with impossibly large argument (%d)\n", len);
 		panic("malloc: bad arg");
 	}
 	/*
@@ -209,9 +215,11 @@ void *malloc(unsigned int len)
 				/* 为了避免出现竞争条件，首先关中断 */
 	// 搜索对应桶目录项中描述符链表，查找具有空闲空间的桶描述符。如果桶描述符的空闲内存
 	// 指针freeptr不为空，则表示找到了相应的桶描述符。
-	for (bdesc = bdir->chain; bdesc; bdesc = bdesc->next)
-		if (bdesc->freeptr)
+	for (bdesc = bdir->chain; bdesc; bdesc = bdesc->next) {
+		if (bdesc->freeptr) {
 			break;
+		}
+	}
 	/*
 	 * If we didn't find a bucket with free space, then we'll
 	 * allocate a new one.
@@ -226,8 +234,9 @@ void *malloc(unsigned int len)
 		// 若free_bucket_desc还为空时，表示第一次调用该程序，或者链表中所有空桶描述符
 		// 都已用完。此时就需要申请一个页面并在其上建立初始化空闲描述符链表。
 		// free_bucket_desc会指向第一个空闲桶描述符。
-		if (!free_bucket_desc)
+		if (!free_bucket_desc) {
 			init_bucket_desc();
+		}
 		// 取free_bucket_desc指向的空闲桶描述符，并让free_bucket_desc指向下一个空闲
 		// 桶描述符。
 		bdesc = free_bucket_desc;
@@ -281,8 +290,12 @@ void *malloc(unsigned int len)
  *
  * 我们将定义一个宏，使得“free(x)”成为“free_s(x, 0)”。
  */
-// 释放存储桶对象。
-// 参数：obj - 对应对象指针；size - 大小。
+
+/**
+ * 释放存储桶对象
+ * @param[in]	obj		对应对象指针
+ * @param[in]	size	大小
+ */
 void free_s(void *obj, int size)
 {
 	void				*page;
@@ -347,7 +360,6 @@ found:
 		bdesc->next = free_bucket_desc;
 		free_bucket_desc = bdesc;
 	}
-	// 开中断，返回。
 	sti();
 	return;
 }

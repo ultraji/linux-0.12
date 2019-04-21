@@ -22,15 +22,22 @@
 
 - `n` 单步调试（不进入函数内部）
 
+- `until linenum` 选择循环结束的下一句的行号
+
 - `finish` 跳出函数
 
 - `set follow-fork-mode child` 设置gdb在fork之后跟踪子进程
 
 - `set follow-fork-mode parent` 设置跟踪父进程。
 
-### 操作变量
+### 打印
 
+- `info reg` 打印寄存器内容
 - `print x` 打印变量
+- `bt`      打印堆栈
+- `bt num`  num为正整数，打印栈顶上num层的栈信息；num为负整数，打印栈底下num层的栈信息。
+
+#### 操作变量
 
 - `print x=val` 修改变量值
 

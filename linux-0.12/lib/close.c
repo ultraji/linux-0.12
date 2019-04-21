@@ -9,7 +9,7 @@
 
 /** 
  * 关闭文件
- * @param[in]	fd		文件描述符
+ * @param[in]	fd		要关闭的文件描述符
  * @retval	
  */
 _syscall1(int, close, int, fd)

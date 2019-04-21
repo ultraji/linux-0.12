@@ -184,7 +184,7 @@ int main(int argc, char ** argv)
 		die("Illegal symbol table in 'boot'");
 	}
 	i = read(id, buf, sizeof buf);
-	fprintf(stderr, "Boot sector %d bytes.\n", i);
+	fprintf(stderr, "Boot sector is %d bytes.\n", i);
 	/* 512字节的引导扇区代码和数据 */
 	if (i != 512) {
 		die("Boot block must be exactly 512 bytes");

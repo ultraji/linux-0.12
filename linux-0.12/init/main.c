@@ -62,6 +62,8 @@ static inline _syscall0(int, sync)
 
 #include <string.h>
 
+#include <linux/log_print.h> 	/* 打印功能 */
+
 static char printbuf[1024];		/* 静态字符串数组，用作内核显示信息的缓存。*/
 
 extern char *strcpy();
@@ -174,19 +176,19 @@ void main(void)		/* This really is void, no error here. */
 	envp_rc[1] = term;
 	drive_info = DRIVE_INFO;
 
-	/* 根据机器物理内存容量设置高速缓冲区和主内存区的位置和范围 */
-	memory_end = (1<<20) + (EXT_MEM_K<<10); /* 1M + 扩展内存大小 */
-	memory_end &= 0xfffff000;				/* 忽略不到4K(1页)的内存 */
-	if (memory_end > 16*1024*1024) {		/* 最多管理16M内存 */
-		memory_end = 16*1024*1024;
+	/* 根据机器物理内存容量设置高速缓冲区和主内存区的r */
+	memory_end = (1 << 20) + (EXT_MEM_K << 10); /* 1M + 扩展内存大小 */
+	memory_end &= 0xfffff000;					/* 忽略不到4K(1页)的内存 */
+	if (memory_end > 16 * 1024 * 1024) {		/* 最多管理16M内存 */
+		memory_end = 16 * 1024 * 1024;
 	}
 
-	if (memory_end > 12*1024*1024) {
-		buffer_memory_end = 4*1024*1024;
-	} else if (memory_end > 6*1024*1024) {
-		buffer_memory_end = 2*1024*1024;
+	if (memory_end > 12 * 1024 * 1024) {
+		buffer_memory_end = 4 * 1024 * 1024;
+	} else if (memory_end > 6 * 1024 * 1024) {
+		buffer_memory_end = 2 * 1024 * 1024;
 	} else {
-		buffer_memory_end = 1*1024*1024;
+		buffer_memory_end = 1 * 1024 * 1024;
 	}
 	main_memory_start = buffer_memory_end;
 #ifdef RAMDISK	/* 如果定义了虚拟盘，则主内存还得相应减少 */
@@ -261,7 +263,7 @@ void init(void)
 	(void) dup(0);		/* stderr */
 
 	printf("%d buffers = %d bytes buffer space\n\r", NR_BUFFERS,
-		NR_BUFFERS*BLOCK_SIZE);
+		NR_BUFFERS * BLOCK_SIZE);
 	printf("Free mem: %d bytes\n\r", memory_end - main_memory_start);
 
 	// 下面通过fork()用于创建一个子进程(任务 2)。

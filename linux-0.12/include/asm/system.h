@@ -28,9 +28,7 @@ __asm__ ("movl %%esp,%%eax\n\t"					\
 /**
  * 设置门描述符宏
  * 根据参数中的中断或异常过程地址addr，门描述符类型type和特权级信息dpl，设置位于地址gate_addr
- * 处的门描述符。(注意:下面"偏移"值是相对于内核代码或数据段来说的)。 %0 - (由dpl,type组合成的
- * 类型标志字); %1 - (描述符低4字节地址);%2 - (描述符高4字节地址); %3 - edx(程序偏移地址addr); 
- * %4 - eax(高字中含有内核代码段选择符0x8)
+ * 处的门描述符。
  * @param[in]	gate_addr	描述符地址
  * @param[in]	type		描述符类型域值
  * @param[in]	dpl			描述符特权级
@@ -53,7 +51,7 @@ __asm__ ("movl %%esp,%%eax\n\t"					\
  * @param[in]	n		中断号
  * @param[in]	addr	中断程序偏移地址
  */
-#define set_intr_gate(n, addr)		_set_gate(&idt[n],14,0,addr)
+#define set_intr_gate(n, addr)		_set_gate(&idt[n], 14, 0, addr)
 
 /** 
  * 设置陷阱门函数
@@ -61,7 +59,7 @@ __asm__ ("movl %%esp,%%eax\n\t"					\
  * @param[in]	n		中断号
  * param[in]	addr	中断程序偏移地址
  */
-#define set_trap_gate(n, addr)		_set_gate(&idt[n],15,0,addr)
+#define set_trap_gate(n, addr)		_set_gate(&idt[n], 15, 0, addr)
 
 /**
  * 设置系统陷阱门函数
@@ -71,7 +69,7 @@ __asm__ ("movl %%esp,%%eax\n\t"					\
  * @param[in]	n		中断号
  * @param[in]	addr	中断程序偏移直
  */
-#define set_system_gate(n, addr) 	_set_gate(&idt[n],15,3,addr)
+#define set_system_gate(n, addr) 	_set_gate(&idt[n], 15, 3, addr)
 
 /**
  * 设置段描述符函数(内核中没有用到)
@@ -81,7 +79,7 @@ __asm__ ("movl %%esp,%%eax\n\t"					\
  * @param[in]	base		段的基地址
  * @param[in]	limit		段限长
  */
-#define _set_seg_desc(gate_addr,type,dpl,base,limit) {				\
+#define _set_seg_desc(gate_addr, type, dpl, base, limit) {			\
 	*(gate_addr) = ((base) & 0xff000000) | 							\
 		(((base) & 0x00ff0000)>>16) |								\
 		((limit) & 0xf0000) |										\
@@ -120,11 +118,11 @@ __asm__ (															\
  * @param[in]	n		该描述符的指针
  * @param[in]	addr	描述符项中段的基地址值
  */
-#define set_tss_desc(n,addr)	_set_tssldt_desc(((char *) (n)),addr,"0x89")
+#define set_tss_desc(n,addr)	_set_tssldt_desc(((char *) (n)),addr, "0x89")
 
 /**
  * 在全局表中设置局部表描述符(局部表段描述符的类型是0x82)
  * @param[in]	n		该描述符的指针
  * @param[in]	addr	描述符项中段的基地址值
  */
-#define set_ldt_desc(n, addr)	_set_tssldt_desc(((char *) (n)),addr,"0x82")
+#define set_ldt_desc(n, addr)	_set_tssldt_desc(((char *) (n)),addr, "0x82")

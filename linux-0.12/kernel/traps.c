@@ -207,10 +207,12 @@ void do_reserved(long esp, long error_code)
 	die("reserved (15,17-47) error", esp, error_code);
 }
 
-// 下面是异常(陷阱)中断程序初始化子程序。设置它们的中断调用门(中断向量)。
-// set_trap_gate() 与 set_system_gate() 都使用了中断描述符表 IDT 中的陷阱门(Trap Gate)，
-// 它们之间的主要区别在于前者设置的特权级为0，后者是3。因此断点陷阱中断 int3，溢出中断 overflow 
-// 和边界出错中断 bounds 可以由任何程序调用。这两个函数均是嵌入式汇编宏程序,参见 include/asm/system.h
+/**
+ * 异常(陷阱)中断程序初始化
+ * 设置它们的中断调用门(中断向量)。set_trap_gate()与set_system_gate()都使用了中断描述符表IDT中
+ * 的陷阱门(Trap Gate)，它们之间的主要区别在于前者设置的特权级为0，后者是3。因此断点陷阱中断int3，
+ * 溢出中断overflow和边界出错中断bounds可以由任何程序调用。
+ */
 void trap_init(void)
 {
 	int i;

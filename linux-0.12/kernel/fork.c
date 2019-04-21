@@ -22,6 +22,8 @@
 #include <asm/segment.h>
 #include <asm/system.h>
 
+#include <linux/log_print.h>
+
 /* 写页面验证.若页面不可写,则复制页面 */
 extern void write_verify(unsigned long address);
 
@@ -207,20 +209,20 @@ int find_empty_process(void)
     int i;
 
     repeat:
-        if ((++last_pid)<0) {
+        if ((++last_pid) < 0) {
             last_pid = 1;
         }
-        for(i=0 ; i<NR_TASKS ; i++) {
+        for(i = 0; i < NR_TASKS; i++) {
             if (task[i] && ((task[i]->pid == last_pid) ||
                         (task[i]->pgrp == last_pid))) {
                 goto repeat;
             }
         }
-    for(i=1 ; i<NR_TASKS ; i++) {
+    for(i = 1; i < NR_TASKS; i++) {
         if (!task[i]) {
+            DEBUG_PRINT("last_pid = %d\n", i);
             return i;
         }
     }
-    
     return -EAGAIN;
 }

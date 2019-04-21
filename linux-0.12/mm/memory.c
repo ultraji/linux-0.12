@@ -77,23 +77,32 @@ unsigned char mem_map [ PAGING_PAGES ] = {0, };
 /*
  * 释放物理地址"addr"处的一页内存。用于函数 free_page_tables()。
  */
-// 释放物理地址addr开始的1页面内存。
-// 物理地址1MB以下的内存空间用于内核程序和缓冲，不作为分配页面的内存空间。因此参数addr需要大于1MB
+/**
+ * 释放物理地址addr开始的1页面内存
+ * 物理地址1MB以下的内存空间用于内核程序和缓冲，不作为分配页面的内存空间。因此参数addr需要大于1MB。
+ * @param[in]	addr	需要释放的起始物理地址
+ * @retval		void
+ */
 void free_page(unsigned long addr)
 {
 	// 首先判断参数给定的物理地址 addr 的合理性。如果物理地址 addr 小于内存低端(1MB)，则表示在内
 	// 核程序或高速缓冲中，对此不予处理。如果物理地址 addr >=系统所含物理内存最高端，则显示出错信
 	// 息并且内核停止工作。
-	if (addr < LOW_MEM) return;
-	if (addr >= HIGH_MEMORY)
+	if (addr < LOW_MEM) {
+		return;
+	}
+	if (addr >= HIGH_MEMORY) {
 		panic("trying to free nonexistent page");
+	}
 	// 如果对参数 addr 验证通过，那么就根据这个物理地址换算出内存低端开始计起的内存页面号。
 	// 页面号 = (addr - LOW_MEME)/4096。可见页面号从0号开始计起.此时addr中存放着页面号。如果该
 	// 页面号对应的页面映射字节不等于0，则减1返回。此时该映射字节值应该为0，表示页面已释放。如果
 	// 对应页面原本就是0，表示该物理页面本来就是空闲的，说明内核代码出问题。于是显示出错信息并停机。
 	addr -= LOW_MEM;
 	addr >>= 12;
-	if (mem_map[addr]--) return;
+	if (mem_map[addr]--) {
+		return;
+	}
 	// 执行到此处表示要释放空闲的页面，则将该页面的引用次数重置为 0
 	mem_map[addr] = 0;
 	panic("trying to free free page");

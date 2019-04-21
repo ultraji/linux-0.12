@@ -54,25 +54,30 @@ extern int sys_close(int fd);
 #define MAX_ARG_PAGES 32
 
 /**
- * 使用库文件 系统调用
+ * 使用库文件
  * 为进程选择一个库文件，并替换进程当前库文件i节点字段值为这里指定库文件名的i节点指针。如果
- * library指针为空，则把进程当前的库文件释放掉
- * @param[in]	library		库文件名
- * @retval		成功返回0，否则返回出错码
+ * library指针为空，则把进程当前的库文件释放掉。
+ * @param[in]       library     库文件名
+ * @retval          成功返回0，否则返回出错码
  */
 int sys_uselib(const char * library)
 {
 	struct m_inode * inode;
 	unsigned long base;
 
-	if (get_limit(0x17) != TASK_SIZE)
+	/* 根据进程的空间长度，判断是否为普通进程 */
+	if (get_limit(0x17) != TASK_SIZE) {
 		return -EINVAL;
+	}
 	if (library) {
-		if (!(inode=namei(library)))		/* get library inode */
+		if (!(inode = namei(library))) {		/* get library inode */
 			return -ENOENT;
-	} else
+		}
+	} else {
 		inode = NULL;
+	}
 /* we should check filetypes (headers etc), but we don't */
+/* 我们应该检查一下文件类型（如头部信息等），但是我们还没有这样做。*/
 	iput(current->library);
 	current->library = NULL;
 	base = get_base(current->ldt[2]);
@@ -99,9 +104,9 @@ int sys_uselib(const char * library)
  * @param[in]	envc	环境变量个数.
  * @retval		栈指针值
  */
-static unsigned long * create_tables(char * p,int argc,int envc)
+static unsigned long * create_tables(char * p, int argc, int envc)
 {
-	unsigned long *argv,*envp;
+	unsigned long *argv, *envp;
 	unsigned long * sp;
 
 	sp = (unsigned long *) (0xfffffffc & (unsigned long) p);
@@ -109,19 +114,19 @@ static unsigned long * create_tables(char * p,int argc,int envc)
 	envp = sp;
 	sp -= argc+1;
 	argv = sp;
-	put_fs_long((unsigned long)envp,--sp);
-	put_fs_long((unsigned long)argv,--sp);
-	put_fs_long((unsigned long)argc,--sp);
+	put_fs_long((unsigned long)envp, --sp);
+	put_fs_long((unsigned long)argv, --sp);
+	put_fs_long((unsigned long)argc, --sp);
 	while (argc-->0) {
-		put_fs_long((unsigned long) p,argv++);
+		put_fs_long((unsigned long) p, argv++);
 		while (get_fs_byte(p++)) /* nothing */ ;
 	}
-	put_fs_long(0,argv);
+	put_fs_long(0, argv);
 	while (envc-->0) {
-		put_fs_long((unsigned long) p,envp++);
+		put_fs_long((unsigned long) p, envp++);
 		while (get_fs_byte(p++)) /* nothing */ ;
 	}
-	put_fs_long(0,envp);
+	put_fs_long(0, envp);
 	return sp;
 }
 
@@ -140,12 +145,14 @@ static unsigned long * create_tables(char * p,int argc,int envc)
  */
 static int count(char ** argv)
 {
-	int i=0;
+	int i = 0;
 	char ** tmp;
 
-	if (tmp = argv)
-		while (get_fs_long((unsigned long *) (tmp++)))
+	if (tmp = argv) {
+		while (get_fs_long((unsigned long *) (tmp++))) {
 			i++;
+		}
+	}
 
 	return i;
 }
@@ -185,38 +192,43 @@ static int count(char ** argv)
 
 /**
  * 复制指定个数的参数字符串到参数和环境空间中
- * @param[in]	argc		欲添加的参数个数
- * @param[in]	argv		参数指针数组
- * @param[in]	page		参数和环境空间页面指针数组
- * @param[in]	p			参数表空间中偏移指针,始终指向已复制串的头部
- * @param[in]	from_kmem	字符串来源标志。
  * 在do_execve()函数中，p初始化为指向参数表(128KB)空间的最后一个长字处，参数字符串是以堆栈操作
  * 方式逆向往其中复制存放的。因此p指针会随着复制信息的增加而逐渐减小，并始终指向参数字符串的头
  * 部。字符串来源标志from_kmem应该是TYT为了给execve()增添执行脚本文件的功能而新加的参数。当没
  * 有运行脚本文件的功能时，所有参数字符串都在用户数据空间中。
+ * @param[in]	argc		欲添加的参数个数
+ * @param[in]	argv		参数指针数组
+ * @param[in]	page		参数和环境空间页面指针数组
+ * @param[in]	p           参数表空间中偏移指针,始终指向已复制串的头部
+ * @param[in]	from_kmem   字符串来源标志。
  * @retval		参数和环境空间当前头部指针。若出错则返回0
  */
-static unsigned long copy_strings(int argc,char ** argv,unsigned long *page,
+static unsigned long copy_strings(int argc, char ** argv, unsigned long *page,
 		unsigned long p, int from_kmem)
 {
 	char *tmp, *pag;
 	int len, offset = 0;
 	unsigned long old_fs, new_fs;
 
-	if (!p)
+	if (!p) {
 		return 0;	/* bullet-proofing */
+	}
 	new_fs = get_ds();
 	old_fs = get_fs();
-	if (from_kmem==2)
+	if (from_kmem == 2) {
 		set_fs(new_fs);
+	}
 	while (argc-- > 0) {
-		if (from_kmem == 1)
+		if (from_kmem == 1) {
 			set_fs(new_fs);
-		if (!(tmp = (char *)get_fs_long(((unsigned long *)argv)+argc)))
+		}
+		if (!(tmp = (char *)get_fs_long(((unsigned long *)argv)+argc))) {
 			panic("argc is wrong");
-		if (from_kmem == 1)
+		}
+		if (from_kmem == 1) {
 			set_fs(old_fs);
-		len=0;		/* remember zero-padding */
+		}
+		len = 0;		/* remember zero-padding */
 		do {
 			len++;
 		} while (get_fs_byte(tmp++));
@@ -228,21 +240,24 @@ static unsigned long copy_strings(int argc,char ** argv,unsigned long *page,
 			--p; --tmp; --len;
 			if (--offset < 0) {
 				offset = p % PAGE_SIZE;
-				if (from_kmem==2)
+				if (from_kmem==2) {
 					set_fs(old_fs);
+				}
 				if (!(pag = (char *) page[p/PAGE_SIZE]) &&
 				    !(pag = (char *) page[p/PAGE_SIZE] =
-				      (unsigned long *) get_free_page())) 
+				      (unsigned long *) get_free_page())) {
 					return 0;
-				if (from_kmem==2)
+				}
+				if (from_kmem==2) {
 					set_fs(new_fs);
-
+				}
 			}
 			*(pag + offset) = get_fs_byte(tmp);
 		}
 	}
-	if (from_kmem==2)
+	if (from_kmem==2) {
 		set_fs(old_fs);
+	}
 	return p;
 }
 
@@ -272,8 +287,9 @@ static unsigned long change_ldt(unsigned long text_size, unsigned long * page)
 	data_base += data_limit - LIBRARY_SIZE;
 	for (i=MAX_ARG_PAGES-1 ; i>=0 ; i--) {
 		data_base -= PAGE_SIZE;
-		if (page[i])
+		if (page[i]) {
 			put_dirty_page(page[i],data_base);
+		}
 	}
 	return data_limit;
 }
@@ -312,12 +328,15 @@ int do_execve(unsigned long * eip,long tmp,char * filename,
 	int sh_bang = 0;
 	unsigned long p=PAGE_SIZE*MAX_ARG_PAGES-4;
 
-	if ((0xffff & eip[1]) != 0x000f)
+	if ((0xffff & eip[1]) != 0x000f) {
 		panic("execve called from supervisor mode");
-	for (i=0 ; i<MAX_ARG_PAGES ; i++)	/* clear page-table */
+	}
+	for (i=0 ; i<MAX_ARG_PAGES ; i++) {	/* clear page-table */
 		page[i]=0;
-	if (!(inode=namei(filename)))		/* get executables inode */
+	}
+	if (!(inode=namei(filename))) {		/* get executables inode */
 		return -ENOENT;
+	}
 	argc = count(argv);
 	envc = count(envp);
 	
@@ -329,12 +348,12 @@ restart_interp:
 	i = inode->i_mode;
 	e_uid = (i & S_ISUID) ? inode->i_uid : current->euid;
 	e_gid = (i & S_ISGID) ? inode->i_gid : current->egid;
-	if (current->euid == inode->i_uid)
+	if (current->euid == inode->i_uid) {
 		i >>= 6;
-	else if (in_group_p(inode->i_gid))
+	} else if (in_group_p(inode->i_gid)) {
 		i >>= 3;
-	if (!(i & 1) &&
-	    !((inode->i_mode & 0111) && suser())) {
+	}
+	if (!(i & 1) && !((inode->i_mode & 0111) && suser())) {
 		retval = -ENOEXEC;
 		goto exec_error2;
 	}

@@ -102,7 +102,8 @@ __asm__ ("movl %%esp,%%eax\n\t"					\
  * @param[in]	type	描述符中的标志类型字节
  */
 #define _set_tssldt_desc(n,addr,type)								\
-__asm__ ("movw $104,%1\n\t"											\
+__asm__ (															\
+	"movw $104,%1\n\t"												\
 	"movw %%ax,%2\n\t"												\
 	"rorl $16,%%eax\n\t"											\
 	"movb %%al,%3\n\t"												\

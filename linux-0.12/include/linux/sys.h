@@ -1,6 +1,9 @@
 /*
  * Why isn't this a .c file?  Enquiring minds....
  */
+/*
+ * 为什么这不是一个.c文件？动动脑筋自己想想....
+ */
 
 extern int sys_setup();
 extern int sys_exit();

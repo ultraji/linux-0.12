@@ -1,7 +1,7 @@
 #ifndef _MM_H
 #define _MM_H
 
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 4096	/* 定义页面大小(字节数) */
 
 #include <linux/kernel.h>
 #include <signal.h>
@@ -17,7 +17,7 @@ extern void free_page(unsigned long addr);
 void swap_free(int page_nr);
 void swap_in(unsigned long *table_ptr);
 
-extern inline volatile void oom(void)
+static inline void oom(void)
 {
 	printk("out of memory\n\r");
 	do_exit(SIGSEGV);

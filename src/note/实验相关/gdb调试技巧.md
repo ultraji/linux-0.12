@@ -1,21 +1,47 @@
 # gdb 调试技巧
 
-1. `r` 运行
+## 调试命令
 
-2. `c` 继续运行
+### 运行
 
-3. `b breakpoint` 设置断点， 例如 `b main` 在main函数开始处设置断点
+- `r` 运行
 
-4. `s` 单步调试（进入函数内部）
+- `c` 继续运行
 
-5. `n` 单步调试（不进入函数内部）
+### 设置断点
 
-6. `finish` 跳出函数
+- `b breakpoint` 设置断点， 例如 `b main` 在main函数开始处设置断点
 
-7. `set follow-fork-mode child` 设置gdb在fork之后跟踪子进程
+- `b linenum` 在当前调试文件的某行上设置断点，例如 `b 100` 在100行设置断点
 
-    `set follow-fork-mode parent` 设置跟踪父进程。
+- `b filename:linenum` 在某文件的某行上设置断点，例如 `b main.c:100` 在 main.c:100 行设置断点
 
-8. `print x=val` 修改变量值
+### 单步调试
 
-9. `q` 退出
+- `s` 单步调试（进入函数内部）
+
+- `n` 单步调试（不进入函数内部）
+
+- `finish` 跳出函数
+
+- `set follow-fork-mode child` 设置gdb在fork之后跟踪子进程
+
+- `set follow-fork-mode parent` 设置跟踪父进程。
+
+### 操作变量
+
+- `print x` 打印变量
+
+- `print x=val` 修改变量值
+
+### 退出
+
+- `q` 退出
+
+## 调试常见问题
+
+### optimized out
+
+**Q**：print 打印变量，输出 `<optimized out>` ？
+
+**A**：原因：编译器优化掉了该变量，导致无法打印；解决：去除编译器优化命令，去掉gcc的`-O`选项，或指定为`-O0`。

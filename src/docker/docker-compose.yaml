@@ -1,0 +1,15 @@
+version: "2"
+services:
+  ubuntu-novnc-xfce:
+    image: ultraji/ubuntu-xfce-novnc
+    container_name: oslab
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - 6080:6080
+    volumes:
+      # 根据自己的代码路径配置，例如
+      - /home/ultraji/workplace/linux-0.12:/home/ubuntu/linux-0.12
+    tty: true
+    stdin_open: true
+    restart: unless-stopped 

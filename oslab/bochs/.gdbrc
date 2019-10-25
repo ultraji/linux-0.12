@@ -1,0 +1,4 @@
+break main
+target remote localhost:1234
+handle SIGSEGV nostop noprint ignore
+continue

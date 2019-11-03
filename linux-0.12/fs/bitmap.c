@@ -89,7 +89,7 @@ int free_block(int dev, int block)
 	if (block < sb->s_firstdatazone || block >= sb->s_nzones) {
 		panic("trying to free block not in datazone");
 	}
-	/* 然后从hash表中寻找该块数据 */
+	/* 从hash表中寻找该块数据 */
 	bh = get_hash_table(dev, block);
 	if (bh) {
 		if (bh->b_count > 1) {	/* 引用次数大于1，该块还有人用，则调用brelse()后退出 */
@@ -104,11 +104,11 @@ int free_block(int dev, int block)
 	}
 	/* 接着复位block在逻辑块位图中的位(置0) */
 	block -= sb->s_firstdatazone - 1 ;
-	if (clear_bit(block & 8191, sb->s_zmap[block/8192]->b_data)) { /* 1个缓冲块有1024B，即8192bits */
+	if (clear_bit(block & 8191, sb->s_zmap[block/8192]->b_data)) {
 		printk("block (%04x:%d) ", dev, block + sb->s_firstdatazone - 1);
 		printk("free_block: bit already cleared\n");
 	}
-	/* 最后置相应逻辑块位图所在缓冲区已修改标志 */
+	/* 最后置相应逻辑块位图所在缓冲区的已修改标志 */
 	sb->s_zmap[block/8192]->b_dirt = 1;
 	return 1;
 }
@@ -216,7 +216,7 @@ void free_inode(struct m_inode * inode)
 }
 
 /**
- * 为设备dev建立一个新i节点
+ * 在设备dev上创建一个新i节点
  * @param[in]	dev		设备号
  * @retval		成功返回新i节点的指针，失败返回NULL
  */

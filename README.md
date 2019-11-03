@@ -12,7 +12,7 @@
 
 #### 1.1 方式一
 
-可以选择已创建好的docker镜像作为实验环境（人生苦短，我用容器）。linux用户可以通过挂载将本地项目目录挂载到容器中，windows或mac用户可以在容器内重新git clone一份（因为不区分文件名大小写会导致挂载出错）。
+可以选择已创建好的docker镜像作为实验环境（人生苦短，我用容器）。linux用户可以通过挂载将本地项目目录挂载到容器中，windows或mac用户可以在容器内重新git clone一份（因为不区分文件名大小写会导致挂载出错）。->[Dockerfile](src/docker/Dockerfile)
 
 1. docker方式
 
@@ -34,7 +34,7 @@
     docker-compose up -d
     ```
 
-2. 通过浏览器输入```http://localhost:6080```访问容器内的桌面系统了。
+2. 通过浏览器输入```http://localhost:6080```就访问容器内的桌面系统了。
 
     - vnc登陆密码: 123456
     - 默认用户: ubuntu
@@ -42,7 +42,7 @@
 
 #### 1.2 方式二
 
-**ubuntu(64bit，>=14.04)** 的用户也可以使用`src/code`目录下的一键环境搭建脚本[setup.sh](src/code/setup.sh)。
+**ubuntu(64bit，>=14.04)** 的用户也可以使用`src/code`目录下的一键环境搭建脚本。->[setup.sh](src/code/setup.sh)
 
 ### 二、如何使用
 

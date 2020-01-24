@@ -6,7 +6,7 @@
 
 2. oslab为实验目录，切到oslab目录下，运行该目录下的`run.sh`脚本即可运行linux0.12操作系统。
 
-![实验截图](https://lychee.ultraji.xyz/uploads/big/f2c32a415408eba43066af5de70c6271.jpg)
+![实验截图](/src/.pic/oslab.jpg)
 
 ### 一、环境搭建
 

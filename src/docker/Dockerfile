@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -14,14 +14,17 @@ RUN apt-get update && apt-get install -y \
     git \
     sudo \
     gdb \
-    && apt-get autoclean \
-    && locale-gen en_US.UTF-8
+    ttf-wqy-zenhei \
+    && locale-gen en_US.UTF-8 \
+    && apt-get autoclean && rm -rf /var/lib/apt/lists/*
 
 # install xfce
 RUN apt-get update \ 
-	&& apt-get install -y supervisor \
+	&& apt-get install -y \
+    supervisor \
 	xfce4 \
-	xfce4-terminal
+	xfce4-terminal \
+    && apt-get autoclean && rm -rf /var/lib/apt/lists/*
 
 # install tigervnc
 RUN wget -qO- https://dl.bintray.com/tigervnc/stable/tigervnc-1.8.0.x86_64.tar.gz | tar xz --strip 1 -C /
@@ -40,14 +43,15 @@ RUN (echo "root:123456" | chpasswd) && adduser ${USER} --disabled-password && (e
 
 RUN apt-get update && apt-get install -y \
     build-essential bochs bochs-x bochs-sdl \
-    make bin86 gcc-multilib
+    make bin86 gcc-multilib \
+    && apt-get autoclean && rm -rf /var/lib/apt/lists/*
 
 RUN wget -q --show-progress http://mirrors.ustc.edu.cn/ubuntu-old-releases/ubuntu/pool/universe/g/gcc-3.4/gcc-3.4-base_3.4.6-6ubuntu3_amd64.deb && dpkg -i gcc-3.4-base_3.4.6-6ubuntu3_amd64.deb || echo
 RUN wget -q --show-progress http://mirrors.ustc.edu.cn/ubuntu-old-releases/ubuntu/pool/universe/g/gcc-3.4/gcc-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i gcc-3.4_3.4.6-6ubuntu3_amd64.deb || echo
 RUN wget -q --show-progress http://mirrors.ustc.edu.cn/ubuntu-old-releases/ubuntu/pool/universe/g/gcc-3.4/cpp-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i cpp-3.4_3.4.6-6ubuntu3_amd64.deb || echo
 RUN wget -q --show-progress http://mirrors.ustc.edu.cn/ubuntu-old-releases/ubuntu/pool/universe/g/gcc-3.4/g++-3.4_3.4.6-6ubuntu3_amd64.deb && dpkg -i g++-3.4_3.4.6-6ubuntu3_amd64.deb || echo
 RUN wget -q --show-progress http://mirrors.ustc.edu.cn/ubuntu-old-releases/ubuntu/pool/universe/g/gcc-3.4/libstdc++6-dev_3.4.6-6ubuntu3_amd64.deb && dpkg -i libstdc++6-dev_3.4.6-6ubuntu3_amd64.deb || echo
-RUN apt-get install -y -f && rm *.deb
+RUN apt-get install -y -f && rm *.deb && apt-get autoclean && rm -rf /var/lib/apt/lists/*
 
 ADD conf/vnc_startup.sh ${HOME}
 RUN chmod +x ${HOME}/vnc_startup.sh

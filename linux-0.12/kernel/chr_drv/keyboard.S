@@ -15,7 +15,7 @@
  * KBD_GR for German keyboards
  * KBD_FR for Frech keyboard
  */
-#define KBD_FINNISH
+#define KBD_US
 
 .text
 .globl keyboard_interrupt

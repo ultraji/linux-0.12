@@ -202,12 +202,12 @@ ok_load_setup:
     mov	es,ax           ; 上面取磁盘参数中断改了es的值，这里需要改回来
 
 ! Print some inane message
-; 在显示一些信息('Loading\r\n'，共9个字符)。
+; 在显示一些信息('HuangLong\r\n'，共11个字符)。
     mov	ah,#0x03        ! read cursor pos
     xor	bh,bh
     int	0x10
 
-    mov	cx,#9
+    mov	cx,#11
     mov	bx,#0x0007      ! page 0, attribute 7 (normal)
     mov	bp,#msg1
     mov	ax,#0x1301      ! write string, move cursor
@@ -331,8 +331,8 @@ ok3_read:
 read_track:
     pusha			; push all
     pusha
-    mov	ax, #0xe2e 	! loading... message 2e = .
-    mov	bx, #7
+    mov	ax, #0xe2b 	! loading... message 2e = +
+    mov	bx, #4
     int	0x10
     popa
     ; 开始进行磁道扇区读操作
@@ -461,7 +461,7 @@ sectors:
 
 msg1:
     .byte 13,10
-    .ascii "Loading"
+    .ascii "HuangLong"
 
 .org 506
 ; swap_dev在第506开始的2个字节中，root_dev在第508开始的2个字节中

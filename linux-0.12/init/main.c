@@ -145,6 +145,7 @@ static long memory_end = 0;				/* 机器所具有的物理内存容量 */
 static long buffer_memory_end = 0;		/* 高速缓冲区末端地址 */
 static long main_memory_start = 0;		/* 主内存开始的位置 */
 static char term[32];					/* 终端设置字符串 */
+static char mem_str[60];					/* 终端设置字符串 */
 
 /* 读取并执行/etc/rc文件时所使用的命令行参数和环境参数 */
 static char * argv_rc[] = { "/bin/sh", NULL };
@@ -196,6 +197,7 @@ int main(void)		/* This really is void, no error here. */
 #endif
 
 /* 以下是内核进行所有方面的初始化工作 */
+	sprintf(mem_str, "start_mem=0x%lx, end_mem=0x%lx\n\r", main_memory_start, memory_end);
 	mem_init(main_memory_start, memory_end);/* 主内存区初始化 */
 	trap_init();							/* 陷阱门初始化 */
 	blk_dev_init();							/* 块设备初始化 */
@@ -207,6 +209,7 @@ int main(void)		/* This really is void, no error here. */
 	hd_init();								/* 硬盘初始化 */
 	floppy_init();							/* 软驱初始化 */
 
+	printk("%s\r\n", mem_str);
 	sti();									/* 开启中断 */
 	move_to_user_mode();
 	if (!fork()) {							/* we count on this going ok */
